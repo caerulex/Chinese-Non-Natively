@@ -2,12 +2,13 @@ IMAGE_NAME = html-server-image
 VERSION = v1
 DIR = $(shell pwd)
 HTML_FILE = "tempBrowseLocal.html"
+ARGS=
 
 requirements:
 	pip install -r setup/requirements.txt
 
 generate:
-	python -m chinese_non_natively
+	python -m chinese_non_natively $(ARGS)
 
 build:
 	docker build -t $(IMAGE_NAME):$(VERSION) -f docker/Dockerfile .
