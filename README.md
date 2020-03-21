@@ -69,10 +69,10 @@ Then, run:
 Then, open to `localhost:8081`
 If you would like to use different ports for listening/displaying:
 
-listening:
+#### listening:
 
 modify the `default.conf` and the Makefile `run` command
 
-displaying:
+#### displaying:
 
 modify the Makefile `run` command
