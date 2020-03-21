@@ -72,13 +72,15 @@ Alternatively, calling python directly, you can use the command:
 
 `python -m chinese_non_natively --help` to see arguments along with descriptions.
 
-Note: hiding all pinyin removes pinyin completely from output; however, hiding non vocab pinyin mutes pinyin above non-vocab words by turning its font color to white. This makes it easy to highlight a character and see its associated pinyin.
+### Notes: 
+
+* Hiding all pinyin removes pinyin completely from output; however, hiding non vocab pinyin mutes pinyin above non-vocab words by turning its font color to white. This makes it easy to highlight a character and see its associated pinyin.
 
 #### The reason for this design choice:
 
 People with an intermediate knowledge of chinese may find that pinyin displayed above all words can be distracting. It's possible that they would like to see pinyin only over unknown vocab words. At the same time, they might still wish to have the option to see the pinyin of a non-vocab word.
 
-Note: Vocab definitions and pinyin are set to be un-selectable/un-highlightable. This is because selecting text with highlighting enabled for vocab, pinyin, and Chinese characters results in a jumbled output. With highlighting of pinyin and vocab disabled, users can easily copy lines of Chinese text without issue.
+* Vocab definitions and pinyin are set to be un-selectable/un-highlightable. This is because selecting text with highlighting enabled for vocab, pinyin, and Chinese characters results in a jumbled output. With highlighting of pinyin and vocab disabled, users can easily copy lines of Chinese text without issue.
 
 ## Usage
 ### Simple html file
