@@ -1,6 +1,6 @@
 # HTML to be injected
-base_font_size = 30
-english_scaling = 0.5
+base_font_size = 40
+english_scaling = 0.4
 header = '<!DOCTYPE html><html><body>'
 footer = '</body></html>'
 
@@ -49,11 +49,11 @@ z-index: 21 \
 	position: absolute;\
 	display:initial;\
 	padding-left: .1rem!important;\
-	padding-top: 4rem!important;\
+	padding-top: 5.5rem!important;\
 	z-index: -1;\
 	user-select: none; \
 	text-align:left; \
-	white-space: pre; \
+	white-space: pre-line; \
 }\
 .pinyin span{\
   text-indent: 0px;\
@@ -65,7 +65,7 @@ z-index: 21 \
 	position: absolute;\
 	display:initial;\
 	padding-left: .1rem!important;\
-	padding-top: 0.7rem!important;\
+	padding-top: 1.5rem!important;\
 	z-index: 1;\
 	user-select: none; \
 	text-align:justify; \
