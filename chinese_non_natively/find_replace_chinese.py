@@ -5,7 +5,7 @@ import glob
 from pypinyin import pinyin, load_phrases_dict
 import itertools
 from PIL import ImageFont
-from chinese_non_natively.html_definitions import header, footer, style, base_font_size, english_scaling
+from chinese_non_natively.html_definitions import header, footer, get_style, base_font_size, english_scaling
 from chinese_non_natively.pinyin_exceptions import exceptions as pinyin_exceptions
 load_phrases_dict(pinyin_exceptions)
 
@@ -69,22 +69,26 @@ class ChineseLanguageAssistantReader():
 	def is_chinese_char(self, char):
 		return 0x4e00 <= ord(char) <= 0x9fff
 
+	def find_chinese_phrase(self, text_list, phrase_end_ind):
+		phrase_start_ind = phrase_end_ind
+		# parse all chinese characters until a non-chinese character appears
+		while self.is_chinese_char(text_list[phrase_end_ind]):
+			phrase_end_ind += 1
+		# skip index i to the end of phrase to avoid re-parsing part of the phrase
+		pinyin_text = " ".join(list(itertools.chain.from_iterable(pinyin(text_list[phrase_start_ind:phrase_end_ind]))))
+		chinese_text = "".join(text_list[phrase_start_ind:phrase_end_ind])
+		phrase_text = self.process_phrase(pinyin_text, chinese_text)
+		return phrase_text, phrase_end_ind
+
 	def add_pinyin(self,text):
 		text_list = list(text)
 		final_text = ""
 		i = 0
 		while i < len(text_list):
 			# if we encounter a chinese character, begin processing
-			if self.is_chinese_char(text_list[i]):  # Chinese Character Unicode range
-				phrase_end_ind = i
-				# parse all chinese characters until a non-chinese character appears
-				while self.is_chinese_char(text_list[phrase_end_ind]):
-					phrase_end_ind += 1
-				# skip index i to the end of phrase to avoid re-parsing part of the phrase
-				pinyin_text = " ".join(list(itertools.chain.from_iterable(pinyin(text_list[i:phrase_end_ind]))))
-				chinese_text = "".join(text_list[i:phrase_end_ind])
-				final_text += self.process_phrase(pinyin_text, chinese_text)
-				i = phrase_end_ind
+			if self.is_chinese_char(text_list[i]):
+				phrase_text, i = self.find_chinese_phrase(text_list, i)
+				final_text += phrase_text
 			else:
 				final_text += str(text_list[i])
 				# add a <br> tag in html if there is a new line in the raw text
@@ -108,7 +112,8 @@ class ChineseLanguageAssistantReader():
 			print("Could not open file ", file_name)
 		return file_contents
 
-	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True):
+	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False):
+		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin)
 		text_files = glob.glob(self.raw_chinese_files_dir + '/*.txt')
 		print("translating: ", text_files)
 		text = ""

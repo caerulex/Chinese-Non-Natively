@@ -45,9 +45,45 @@ Copy and paste the Chinese text into a text file in the `raw_chinese_files` fold
 
 You can place multiple files in this folder; the program will output translations for all of the provided files in one webpage.
 
+### Pinyin and Vocab Display Options
+
+There are 3 options for displaying pinyin:
+
+1. No pinyin
+2. Pinyin only above vocab
+3. Pinyin above all characters
+
+There are only 2 options for displaying vocab:
+
+1. Show vocab
+2. Hide vocab
+
+These are controlled by args into the python program.
+
+Control these args using the makefile:
+
+`make generate ARGS="[--hide_pinyin|--hide_vocab|hide_non_vocab_pinyin]"`
+
+i.e., to disable pinyin and vocab (so just display unmodified raw text):
+
+`make generate ARGS="--hide_pinyin --hide_vocab]"`
+
+Alternatively, calling python directly, you can use the command:
+
+`python -m chinese_non_natively --help` to see arguments along with descriptions.
+
+Note: hiding all pinyin removes pinyin completely from output; however, hiding non vocab pinyin mutes pinyin above non-vocab words by turning its font color to white. This makes it easy to highlight a character and see its associated pinyin.
+
+#### The reason for this design choice:
+
+People with an intermediate knowledge of chinese may find that pinyin displayed above all words can be distracting. It's possible that they would like to see pinyin only over unknown vocab words. At the same time, they might still wish to have the option to see the pinyin of a non-vocab word.
+
+Note: Vocab definitions and pinyin are set to be un-selectable/un-highlightable. This is because selecting text with highlighting enabled for vocab, pinyin, and Chinese characters results in a jumbled output. With highlighting of pinyin and vocab disabled, users can easily copy lines of Chinese text without issue.
+
 ## Usage
 ### Simple html file
-To simply create an html file and open the file in the browser,
+To simply create an html file and open the file in the browser using default settings
+(showing pinyin above all characters, and showing all vocab):
 
 `make generate`
 
