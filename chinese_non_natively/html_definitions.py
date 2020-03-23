@@ -50,19 +50,6 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		#light_bg { \
 			background: rgba(255, 255, 255, 0.75)	\
 		} \
-		hr { \
-			overflow: visible; /* For IE */ \
-			padding: 0; \
-			border: none; \
-			text-align: center; \
-		} \
-		hr:after { \
-			content: "🌸🌸🌸🌸🌸🌸🌸"; \
-			font-size: ' + str(base_font_size) + 'px;\
-			display: inline-block; \
-			position: relative; \
-			top: -0.7em; \
-		} \
 		#chapter_heading { \
 			align-items: center; \
 			width: 90%; \
@@ -79,7 +66,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		.line-text {\
 			position: relative;\
 			font-size: ' + str(base_font_size) + 'px;\
-			line-height: 2.5;\
+			line-height: 3.0;\
 			padding-top: 0.5em; \
 			margin-top: -1em; \
 			margin-left:auto; \
@@ -115,7 +102,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			position: absolute;\
 			display:initial;\
 			padding-left: .4rem!important;\
-			padding-top: 5rem!important;\
+			padding-top: 5.5rem!important;\
 			z-index: -1;\
 			user-select: none; \
 			text-align:left; \
@@ -131,12 +118,12 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			position: absolute;\
 			display:initial;\
 			padding-left: .1rem!important;\
-			padding-top: 1rem!important;\
+			padding-top: 1.5rem!important;\
 			z-index: 1;\
 			user-select: none; \
 			text-align:justify; \
 			white-space: pre; \
-			font-family: "Alegreya Sans";\
+			font-family: "DejaVuSans"; \
 		}\
 		.overlay .pinyin span{\
 			color: rgb(100, 62, 70);\
@@ -179,9 +166,12 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			justify-content: center; \
 			align-items: center; \
 			display: flex; \
-			margin-bottom: -1em; \
+			margin-bottom: 1em; \
 			margin-top: -2.5em; \
 			padding-left: 0em; \
+		} \
+		#nav p { \
+			margin: 0em; \
 		} \
 		a:link, a:visited, a:hover, a:active {color: black;} \
 		#disabled { \
@@ -195,41 +185,6 @@ def get_script():
 	script = '<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>'
 	script += '''<script type="text/javascript">
 		$(document).ready(function() {
-
-			// index to reference the next/prev display
-			var i = 1;
-			// get the total number of display sections
-			//    where the ID starts with "anchor_"
-			var len = $('div[id^="anchor_"]').length - 1;
-			console.log(i)
-			console.log(len)
-
-			// for next, increment the index, or reset to 0, and concatenate 
-			//    it to "anchor_" and set it as the hash
-			$('#next').click(function() {
-				console.log(i)
-				console.log(i < len)
-				if (i < len) {
-					i++;
-					console.log('i + 1 <= len')
-					console.log(i)
-				}
-				window.location.hash = "anchor_" + i;
-				console.log(window.location.hash)
-				return false;
-			});
-
-
-			// for prev, if the index is 0, set it to the total length, then decrement
-			//    it, concatenate it to "anchor_" and set it as the hash
-			$('#prev').click(function() {
-				if (i > 0) {
-					i--;
-				}
-				window.location.hash = "anchor_" + i;
-				return false;
-			});
-
 		});
 	</script>'''
 	return script

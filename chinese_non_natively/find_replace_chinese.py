@@ -136,17 +136,17 @@ class ChineseLanguageAssistantReader():
 			text += '<div id=nav>\
 					<p id="disabled">[prev]</p> \
 					<a href=#top>[top]</a> \
-					<a href="#" id="next">[next]</a></div>'
+					<a href=#anchor_' + str(idx+1) + ' id="next">[next]</a></div>'
 		elif idx == len(self.text_files):
 			text += '<div id=nav>\
-					<a href="#" id="prev">[prev]</a> \
+					<a href=#anchor_' + str(idx-1) + ' id="prev">[prev]</a> \
 					<a href=#top>[top]</a> \
 					<p id="disabled">[next]</a></p></div>'
 		else:
 			text += '<div id=nav>\
-					<a href="#" id="prev">[prev]</a> \
+					<a href=#anchor_' + str(idx-1) + ' id="prev">[prev]</a> \
 					<a href=#top>[top]</a> \
-					<a href="#" id="next">[next]</a></div>'
+					<a href=#anchor_' + str(idx+1) + ' id="next">[next]</a></div>'
 		text += '&nbsp</div>'
 		return text
 
@@ -154,7 +154,6 @@ class ChineseLanguageAssistantReader():
 	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False, theme=pink):
 		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, \
 			base_font_size=base_font_size, english_scaling=english_scaling, theme=theme)
-		js = get_script()
 		self.text_files = sorted(glob.glob(self.raw_chinese_files_dir + '/*.txt'))
 		print("translating: ", self.text_files)
 		text = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1>\
@@ -175,6 +174,6 @@ class ChineseLanguageAssistantReader():
 				text += self.add_pinyin(file_contents)
 			else:
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'
-			text += '</div></div>\n<hr>\n'
-		return '<!DOCTYPE html>' + style + js + header + "\n" + text + footer
+			text += '</div></div>'
+		return '<!DOCTYPE html>' + style + header + "\n" + text + footer
 
