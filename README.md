@@ -66,11 +66,19 @@ Control these args using the makefile:
 
 i.e., to disable pinyin and vocab (so just display unmodified raw text):
 
-`make generate ARGS="--hide_pinyin --hide_vocab]"`
+`make generate ARGS="--hide_pinyin --hide_vocab"`
 
 Alternatively, calling python directly, you can use the command:
 
 `python -m chinese_non_natively --help` to see arguments along with descriptions.
+
+### Theme Color
+
+To change the color scheme, use the arg:
+
+`make generate ARGS="--theme [pink|teal|###,###,###]"`
+
+I.e. `make generate ARGS="--theme teal"` or `make generate ARGS="--theme 0,0,0"`, where `0,0,0` is rgb(0,0,0), or black.
 
 ### Notes: 
 

@@ -5,9 +5,12 @@ import glob
 from pypinyin import pinyin, load_phrases_dict
 import itertools
 from PIL import ImageFont
-from chinese_non_natively.html_definitions import header, footer, get_style, base_font_size, english_scaling
+from chinese_non_natively.html_definitions import header, footer, get_style, get_script
 from chinese_non_natively.pinyin_exceptions import exceptions as pinyin_exceptions
 load_phrases_dict(pinyin_exceptions)
+base_font_size = 40
+english_scaling = 0.4
+pink = '153, 0, 17'
 
 font = ImageFont.truetype(\
 	"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",\
@@ -112,15 +115,58 @@ class ChineseLanguageAssistantReader():
 			print("Could not open file ", file_name)
 		return file_contents
 
-	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False):
-		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin)
-		text_files = glob.glob(self.raw_chinese_files_dir + '/*.txt')
-		print("translating: ", text_files)
-		text = ""
-		for file_name in text_files:
-			file_contents = self.get_file_contents(file_name)
-			text += '<h1>' + os.path.splitext(os.path.basename(file_name))[0] + '</h1>\n<div><span class="line-text">'
+	def add_toc(self):
+		text = '<div id="toc_container"><p class="toc_title">Table of Contents</p><ul class="toc_list">'
+		idx = 1
+		for file_name in self.text_files:
+			text += '<li><a href=#anchor_' + str(idx) + '>' + \
+				os.path.splitext(os.path.basename(file_name))[0] + '</a></li>'
+			idx +=1
+		text += '</ul></div>'
+		return text
 
+	def add_nav(self, idx, file_name):
+		text = '<div id=chapter_heading>'
+		# add file title
+		text += '<div id=anchor_' + str(idx) + ' style="margin-top: -.8em;"><h1>' + \
+				os.path.splitext(os.path.basename(file_name))[0] + \
+				'</h1></div>'
+		# add navigation to previous, top, and next
+		if idx == 1:
+			text += '<div id=nav>\
+					<p id="disabled">[prev]</p> \
+					<a href=#top>[top]</a> \
+					<a href="#" id="next">[next]</a></div>'
+		elif idx == len(self.text_files):
+			text += '<div id=nav>\
+					<a href="#" id="prev">[prev]</a> \
+					<a href=#top>[top]</a> \
+					<p id="disabled">[next]</a></p></div>'
+		else:
+			text += '<div id=nav>\
+					<a href="#" id="prev">[prev]</a> \
+					<a href=#top>[top]</a> \
+					<a href="#" id="next">[next]</a></div>'
+		text += '&nbsp</div>'
+		return text
+
+
+	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False, theme=pink):
+		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, \
+			base_font_size=base_font_size, english_scaling=english_scaling, theme=theme)
+		js = get_script()
+		self.text_files = sorted(glob.glob(self.raw_chinese_files_dir + '/*.txt'))
+		print("translating: ", self.text_files)
+		text = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1>\
+				<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
+		text += self.add_toc()
+		idx = 1
+		for file_name in self.text_files:
+			file_contents = self.get_file_contents(file_name)
+			text += self.add_nav(idx,file_name)
+			idx += 1
+			text += '\n<div><div class="line-text">'
+			
 			if show_definitions and show_pinyin:
 				text += self.add_pinyin(self.add_english_definitions(file_contents))
 			elif show_definitions:
@@ -129,6 +175,6 @@ class ChineseLanguageAssistantReader():
 				text += self.add_pinyin(file_contents)
 			else:
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'
-			text += '</span></div>\n<hr>\n'
-		return header + style + "\n" + text + footer
+			text += '</div></div>\n<hr>\n'
+		return '<!DOCTYPE html>' + style + js + header + "\n" + text + footer
 
