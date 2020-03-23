@@ -69,7 +69,6 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			height: 50%; \
 			background: #ffffff none repeat scroll 0 0; \
 			border-top:0.5em solid rgba(' + theme + ', 0.60); \
-			//border-bottom:0.5em solid rgba(' + theme + ', 0.60); \
 			display: table; \
 			margin-bottom: 1em; \
 			margin-left:auto; \
@@ -81,14 +80,16 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			position: relative;\
 			font-size: ' + str(base_font_size) + 'px;\
 			line-height: 2.5;\
-			background-color: #ffffff; \
 			padding-top: 0.5em; \
 			margin-top: -1em; \
 			margin-left:auto; \
 			margin-right:auto;\
 			justify-content: center; \
 		}\
-		\
+		#bg { \
+			background-color: #ffffff; \
+			z-index: 0; \
+		} \
 		.overlay {\
 			color: rgb(' + pink + ');\
 			vertical-align: middle;\
@@ -102,7 +103,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			padding-right: .3rem!important;\
 			padding-left: .3rem!important;\
 			white-space: pre;\
-			z-index: 21 \
+			z-index: 21; \
 		}\
 		.overlay #english{\
 			text-indent: 0px;\
@@ -115,7 +116,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			display:initial;\
 			padding-left: .4rem!important;\
 			padding-top: 5rem!important;\
-			z-index: 22;\
+			z-index: -1;\
 			user-select: none; \
 			text-align:left; \
 			white-space: pre-line; \

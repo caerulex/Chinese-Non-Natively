@@ -7,7 +7,7 @@ def main():
 	parser.add_argument('--hide_pinyin', help='hide all pinyin above text', action="store_true")
 	parser.add_argument('--hide_vocab', help='hide vocab below text', action="store_true")
 	parser.add_argument('--hide_non_vocab_pinyin', help='hide pinyin, except above vocab', action="store_true")
-	parser.add_argument('--theme', help='either "pink", "teal", or rgb "###,###,###" i.e. "125,125,125"', default="pink")
+	parser.add_argument('--theme', help='either "pink", "teal", or a custom rgb color "###,###,###" i.e. "125,125,125"', default="pink")
 	args = parser.parse_args()
 
 	pink = '153, 0, 17'

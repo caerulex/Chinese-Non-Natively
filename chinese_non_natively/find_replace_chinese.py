@@ -165,7 +165,7 @@ class ChineseLanguageAssistantReader():
 			file_contents = self.get_file_contents(file_name)
 			text += self.add_nav(idx,file_name)
 			idx += 1
-			text += '\n<div><div class="line-text">'
+			text += '\n<div><div class="line-text" id=bg>'
 			
 			if show_definitions and show_pinyin:
 				text += self.add_pinyin(self.add_english_definitions(file_contents))
