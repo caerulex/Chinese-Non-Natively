@@ -30,7 +30,7 @@ def main():
 			print('using custom color ', THEME)
 	
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = 'raw_chinese_files')
-	reader.load_dict('chinese_non_natively/chinese_english_dict.csv')
+	reader.load_dict('chinese_non_natively/vocab.csv')
 	text = reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=SHOW_PINYIN,
 														show_definitions=SHOW_VOCAB,
 														hide_non_vocab_pinyin=PINYIN_ONLY_ON_DEFINITIONS,

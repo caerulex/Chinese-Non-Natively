@@ -2,10 +2,12 @@
 header = '<html><body><div id=light_bg>'
 footer = '</div></body></html>'
 pink = '153, 0, 17'
+border_opacity = str(0.2)
+drop_shadow = '1px 2px 4px rgba(0, 0, 0, .1)'
 
 def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=False, theme=pink):
 	if hide_non_vocab_pinyin:
-		pinyin_non_def_color = 'white'
+		pinyin_non_def_color = 'rgba(255, 255, 255, 0.0)'
 	else:
 		pinyin_non_def_color = '#900C3F'
 	style = "<link href='https://fonts.googleapis.com/css?family=Ma Shan Zheng' rel='stylesheet'>"\
@@ -23,7 +25,8 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 				overflow-x: hidden; \
 		} \
 		div {\
-			margin:5%;\
+			margin:3%;\
+			box-shadow: ' + drop_shadow + '; \
 		}\
 		h1 { \
 			text-align: center;\
@@ -36,10 +39,11 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			text-align: center; \
 		} \
 		#anchor_0 { \
- 			border-bottom: 0.5em solid rgba(' + theme + ', 0.60); \
-			padding-top: 1em; \
-			margin-top: -3em; \
+ 			border-bottom: 0.5em solid rgba(' + theme + ', ' + border_opacity +'); \
+			padding-top: 1%; \
+			margin-top: -3%; \
 			background-color: #ffffff; \
+			box-shadow: ' + drop_shadow + '; \
 		}	\
 		br { \
 			display: block; /* makes it have a width */ \
@@ -50,25 +54,53 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		#light_bg { \
 			background: rgba(255, 255, 255, 0.75)	\
 		} \
+		[id^="anchor_"] { \
+			margin-top: -0.75%; \
+			box-shadow: none; \
+		} \
 		#chapter_heading { \
 			align-items: center; \
 			width: 90%; \
 			height: 50%; \
 			background: #ffffff none repeat scroll 0 0; \
-			border-top:0.5em solid rgba(' + theme + ', 0.60); \
+			border-top:0.5em solid rgba(' + theme + ', ' + border_opacity +'); \
 			display: table; \
-			margin-bottom: 1em; \
+			margin-bottom: 1%; \
 			margin-left:auto; \
 			margin-right:auto;\
 			padding-right: 0em; \
 			justify-content: center; \
 		} \
+		#percent_sub { \
+			text-align: center;\
+			font-family: "Alegreya Sans SC";\
+			margin-top: -2.5%; \
+			color: rgba(0,0,0,0.6) \
+			box-shadow: none; \
+		} \
+		#nav { \
+			font-size: 120%; \
+			font-family: "Alegreya Sans SC";\
+			line-height: 1;\
+			flex-direction: row; \
+			justify-content: center; \
+			align-items: center; \
+			display: flex; \
+			margin-bottom: 0.5%; \
+			margin-top: 0%; \
+			padding-left: 0em; \
+			box-shadow: none; \
+		} \
+		#nav p { \
+			margin: 0em; \
+		} \
 		.line-text {\
 			position: relative;\
 			font-size: ' + str(base_font_size) + 'px;\
 			line-height: 3.0;\
-			padding-top: 0.5em; \
-			margin-top: -1em; \
+			padding-top: 0.5%; \
+			padding-left: 2%; \
+			margin-top: 0%; \
 			margin-left:auto; \
 			margin-right:auto;\
 			justify-content: center; \
@@ -133,11 +165,11 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		}\
 		#toc_container { \
 			background: #ffffff none repeat scroll 0 0; \
-			border:0.5em solid rgba(' + theme + ', 0.60); \
+			border:0.5em solid rgba(' + theme + ', ' + border_opacity +'); \
 			display: table; \
 			font-size: 120%; \
-			margin-bottom: -2em; \
-			margin-top: -2em; \
+			margin-bottom: -1%; \
+			margin-top: -1%; \
 			margin-left:auto; \
 			margin-right:auto;\
 			padding-right: 2em; \
@@ -158,24 +190,9 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		a {\
 			text-decoration: none;\
 		} \
-		#nav { \
-			font-size: 120%; \
-			font-family: "Alegreya Sans SC";\
-			line-height: 1;\
-			flex-direction: row; \
-			justify-content: center; \
-			align-items: center; \
-			display: flex; \
-			margin-bottom: 1em; \
-			margin-top: -2.5em; \
-			padding-left: 0em; \
-		} \
-		#nav p { \
-			margin: 0em; \
-		} \
 		a:link, a:visited, a:hover, a:active {color: black;} \
 		#disabled { \
-			color: gray; \
+			color: rgba(0,0,0,0.3); \
 			cursor: default; \
 		} \
 		</style>'

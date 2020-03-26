@@ -103,8 +103,8 @@ class ChineseLanguageAssistantReader():
 
 	def add_english_definitions(self, text):
 		pattern = re.compile(r'|'.join(re.escape(key) for key in self.mapping_dict.keys()))
-		result = pattern.sub(lambda x: self.mapping_dict[x.group()], text)
-		return result
+		result, num_subs = pattern.subn(lambda x: self.mapping_dict[x.group()], text)
+		return result, num_subs
 
 	def get_file_contents(self, file_name):
 		file_contents = ""
@@ -125,12 +125,14 @@ class ChineseLanguageAssistantReader():
 		text += '</ul></div>'
 		return text
 
-	def add_nav(self, idx, file_name):
+	def add_nav(self, idx, file_name, percent_subbed=0):
 		text = '<div id=chapter_heading>'
 		# add file title
-		text += '<div id=anchor_' + str(idx) + ' style="margin-top: -.8em;"><h1>' + \
+		text += '<div id=anchor_' + str(idx) + '><h1>' + \
 				os.path.splitext(os.path.basename(file_name))[0] + \
 				'</h1></div>'
+		# add % substitutions
+		text += "<p id=percent_sub>" + str('{0:.2f}'.format(percent_subbed*100)) + "% of file covered by vocab file.</p>"
 		# add navigation to previous, top, and next
 		if idx == 1:
 			text += '<div id=nav>\
@@ -162,18 +164,25 @@ class ChineseLanguageAssistantReader():
 		idx = 1
 		for file_name in self.text_files:
 			file_contents = self.get_file_contents(file_name)
-			text += self.add_nav(idx,file_name)
-			idx += 1
-			text += '\n<div><div class="line-text" id=bg>'
 			
-			if show_definitions and show_pinyin:
-				text += self.add_pinyin(self.add_english_definitions(file_contents))
-			elif show_definitions:
-				text += self.add_english_definitions(file_contents)
+			if show_definitions:
+				subbed_text, num_subs = self.add_english_definitions(file_contents)
+				percent_subbed = num_subs / len(file_contents)
+				text += self.add_nav(idx,file_name,percent_subbed)
+				text += '\n<div><div class="line-text" id=bg>'
+				if show_pinyin:
+					text += self.add_pinyin(subbed_text)
+				else:
+					text += subbed_text
+			# if only pinyin, no definitions
 			elif show_pinyin:
+				text += self.add_nav(idx,file_name)
+				text += '\n<div><div class="line-text" id=bg>'
 				text += self.add_pinyin(file_contents)
+			# neither show pinyin or definitions; raw text
 			else:
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'
 			text += '</div></div>'
+			idx += 1
 		return '<!DOCTYPE html>' + style + header + "\n" + text + footer
 
