@@ -1,6 +1,6 @@
 # - *- coding: utf- 8 - *-
 import os
-from flask import Flask, flash, request, redirect, url_for
+from flask import Flask, flash, request, redirect, url_for, render_template
 from werkzeug.utils import secure_filename
 import random, string
 import glob
@@ -14,6 +14,7 @@ logger.addHandler(handler) # adds handler to the werkzeug WSGI logger
 
 import html_definitions
 from find_replace_chinese import ChineseLanguageAssistantReader, base_font_size, english_scaling, pink
+from export_html_and_browse import strToFile
 
 show_pinyin=True
 pinyin_only_on_defs=True
@@ -60,6 +61,7 @@ def run_button():
 		shutil.rmtree(UPLOAD_FOLDER)
 	except OSError as e:
 		print ("Error: %s - %s." % (e.filename, e.strerror))
+	
 	return redirect('/')
 
 def allowed_file(filename):
@@ -78,6 +80,12 @@ def upload_file():
 		if uploaded_files:
 			run_button()
 	return redirect('/')
+
+def reload():
+	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
+		page_head + text + html_definitions.footer
+	strToFile(doc, 'output.html')
+	return render_template('output.html')
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
