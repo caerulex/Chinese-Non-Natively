@@ -87,8 +87,19 @@ def reload():
 		page_head + text + html_definitions.footer
 	return render_template_string(doc)
 
+def gen_new_path():
+	global temp_hash
+	temp_hash = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
+	global UPLOAD_FOLDER
+	UPLOAD_FOLDER = dir_path +  '/' + temp_hash
+	app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
 @app.route('/', methods=['GET', 'POST'])
 def main():
+	global text
+	text = ""
+	gen_new_path()
 	return '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + upload_form + html_definitions.footer
 	
