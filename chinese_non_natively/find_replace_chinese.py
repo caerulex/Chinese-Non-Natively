@@ -13,10 +13,10 @@ english_scaling = 0.4
 pink = '153, 0, 17'
 
 font = ImageFont.truetype(\
-	"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",\
+	"fonts/DejaVuSans.ttf",\
 	 int(base_font_size * english_scaling))
 chinese_font = ImageFont.truetype(\
-	"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",\
+	"fonts/NotoSansCJK-Regular.ttc",\
 	 base_font_size)
 
 class ChineseLanguageAssistantReader():
