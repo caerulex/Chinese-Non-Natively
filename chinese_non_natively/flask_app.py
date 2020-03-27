@@ -5,9 +5,13 @@ from werkzeug.utils import secure_filename
 import random, string
 import glob
 import shutil
+import logging
+
+
 
 import html_definitions
 from find_replace_chinese import ChineseLanguageAssistantReader, base_font_size, english_scaling, pink
+
 show_pinyin=True
 pinyin_only_on_defs=True
 show_definitions=True
@@ -36,10 +40,10 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def run_button():
-	print('run_button proc')
+	app.logger.error('run_button proc')
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
 	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
-	print("csv_files: ", csv_files, csv_files[0])
+	app.logger.error("csv_files: ", csv_files, csv_files[0])
 	reader.load_dict(UPLOAD_FOLDER + '/' + csv_files[0])
 	global text
 	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
@@ -65,7 +69,9 @@ def upload_file():
 			if f and allowed_file(f.filename):
 				filename = secure_filename(f.filename)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				run_button()
+		if uploaded_files:
+			app.logger.error("run_button")
+			run_button()
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
