@@ -47,8 +47,7 @@ def upload_file():
 			if f and allowed_file(f.filename):
 				filename = secure_filename(f.filename)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				return redirect(url_for('uploaded_file',
-										filename=filename))
+				run_button()
 
 def run_button():
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
