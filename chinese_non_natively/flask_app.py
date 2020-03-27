@@ -75,7 +75,7 @@ def upload_file():
 		for f in uploaded_files:
 			if f and allowed_file(f.filename):
 				filename = secure_filename(f.filename)
-				os.makedirs(UPLOAD_FOLDER)
+				os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
 			return redirect('/run_button')
