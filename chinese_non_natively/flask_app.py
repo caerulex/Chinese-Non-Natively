@@ -77,7 +77,7 @@ def upload_file():
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
 			run_button()
-	return 'OK'
+	return redirect('/')
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
