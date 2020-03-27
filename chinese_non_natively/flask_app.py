@@ -30,7 +30,7 @@ UPLOAD_FOLDER = dir_path +  '/' + temp_hash
 os.makedirs(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
 
-page_head = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1> \
+page_head = "<a name=top><div id=anchor_0><h1><a href='/'>Chinese Non-Natively</a></h1> \
 	<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
 upload_form = '''
 	'<div id="toc_container"><h1>Upload new File</h1><ul class="toc_list">
@@ -84,7 +84,7 @@ def upload_file():
 @app.route('/reload', methods=['GET', 'POST'])
 def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
-		page_head + upload_form + text + html_definitions.footer
+		page_head + text + html_definitions.footer
 	return render_template_string(doc)
 
 @app.route('/', methods=['GET', 'POST'])
