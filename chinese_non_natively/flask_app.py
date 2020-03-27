@@ -39,9 +39,6 @@ upload_form = '''
 	<input type=submit value=Upload>
 	</form>'</ul></div>'
 	'''
-button = '''<form action="/run_button" method="post">
-		<button type="submit" value="run" />
-		</form>'''
 global text
 text = ""
 
@@ -93,6 +90,5 @@ def reload():
 @app.route('/', methods=['GET', 'POST'])
 def main():
 	return '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
-		page_head + upload_form + button + \
-			text  + html_definitions.footer
+		page_head + upload_form + html_definitions.footer
 	
