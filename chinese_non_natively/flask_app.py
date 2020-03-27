@@ -34,7 +34,7 @@ upload_form = '''
 	<input type=submit value=Upload>
 	</form>'</ul></div>'
 	'''
-buttom = '''<form action="/run_button" method="post">
+button = '''<form action="/run_button" method="post">
 		<button type="submit" value="run" />
 		</form>'''
 global text
