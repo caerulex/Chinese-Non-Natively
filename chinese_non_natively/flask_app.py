@@ -19,7 +19,7 @@ from export_html_and_browse import strToFile
 show_pinyin=True
 pinyin_only_on_defs=True
 show_definitions=True
-hide_non_vocab_pinyin=True
+hide_non_vocab_pinyin=False
 theme=pink
 style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
 		english_scaling=english_scaling, theme=theme)
@@ -48,18 +48,18 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route('/run_button', methods=['GET', 'POST'])
 def run_button():
 	show_defs = show_definitions
-	disable_non_vocab_pinyin = hide_non_vocab_pinyin
+	show_only_vocab_pinyin = hide_non_vocab_pinyin
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
 	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
 	if not csv_files:
 		show_defs = False
-		disable_non_vocab_pinyin = False
 	else:
 		reader.load_dict(csv_files[0])
+		show_only_vocab_pinyin = True
 	global text
 	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
 														show_definitions=show_defs,
-														hide_non_vocab_pinyin=disable_non_vocab_pinyin)
+														hide_non_vocab_pinyin=show_only_vocab_pinyin)
 	print(text[0:20])
 	## Try to remove temp folder; if failed show an error using try...except on screen
 	try:
