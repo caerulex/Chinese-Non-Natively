@@ -86,7 +86,7 @@ def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + text + html_definitions.footer
 	out_path = os.path.join(app.config['UPLOAD_FOLDER'],'output.html')
-	strToFile(doc, out_path)
+	strToFile(doc, filename=out_path)
 	return render_template(out_path)
 
 @app.route('/', methods=['GET', 'POST'])
