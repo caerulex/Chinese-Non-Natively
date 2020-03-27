@@ -5,8 +5,8 @@ import os
 from flask import Flask, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-from . import html_definitions
-from .find_replace_chinese import base_font_size, english_scaling, pink
+import html_definitions
+from find_replace_chinese import base_font_size, english_scaling, pink
 show_definitions=True
 hide_non_vocab_pinyin=False
 theme=pink
