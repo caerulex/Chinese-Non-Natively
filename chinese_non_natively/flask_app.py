@@ -35,6 +35,24 @@ text = ""
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+def run_button():
+	print('run_button proc')
+	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
+	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
+	print("csv_files: ", csv_files, csv_files[0])
+	reader.load_dict(UPLOAD_FOLDER + '/' + csv_files[0])
+	global text
+	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
+														show_definitions=show_definitions,
+														hide_non_vocab_pinyin=pinyin_only_on_defs)
+	print(text[0:20])
+	## Try to remove temp folder; if failed show an error using try...except on screen
+	try:
+		shutil.rmtree(UPLOAD_FOLDER)
+	except OSError as e:
+		print ("Error: %s - %s." % (e.filename, e.strerror))
+	return redirect(request.url)
+
 def allowed_file(filename):
 	return '.' in filename and \
 		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -48,21 +66,6 @@ def upload_file():
 				filename = secure_filename(f.filename)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 				run_button()
-
-def run_button():
-	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
-	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
-	reader.load_dict(UPLOAD_FOLDER + '/' + csv_files[0])
-	global text
-	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
-														show_definitions=show_definitions,
-														hide_non_vocab_pinyin=pinyin_only_on_defs)
-	## Try to remove temp folder; if failed show an error using try...except on screen
-	try:
-		shutil.rmtree(UPLOAD_FOLDER)
-	except OSError as e:
-		print ("Error: %s - %s." % (e.filename, e.strerror))
-	return redirect(request.url)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
