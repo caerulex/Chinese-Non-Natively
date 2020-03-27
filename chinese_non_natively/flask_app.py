@@ -1,6 +1,6 @@
 # - *- coding: utf- 8 - *-
 import os
-from flask import Flask, flash, request, redirect, url_for, render_template
+from flask import Flask, flash, request, redirect, url_for, render_template_string
 from werkzeug.utils import secure_filename
 import random, string
 import glob
@@ -85,9 +85,7 @@ def upload_file():
 def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + text + html_definitions.footer
-	out_path = os.path.join(app.config['UPLOAD_FOLDER'],'output.html')
-	strToFile(doc, filename=out_path)
-	return render_template(out_path)
+	return render_template_string(doc)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
