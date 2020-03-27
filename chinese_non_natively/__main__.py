@@ -1,6 +1,6 @@
 import argparse
-from chinese_non_natively.find_replace_chinese import ChineseLanguageAssistantReader
-from chinese_non_natively.export_html_and_browse import browseLocal
+from .find_replace_chinese import ChineseLanguageAssistantReader
+from .export_html_and_browse import browseLocal
 
 def main():
 	parser = argparse.ArgumentParser()
