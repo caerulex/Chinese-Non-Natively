@@ -49,7 +49,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def run_button():
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
 	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
-	reader.load_dict(UPLOAD_FOLDER + '/' + csv_files[0])
+	reader.load_dict(csv_files[0])
 	global text
 	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
 														show_definitions=show_definitions,
