@@ -47,10 +47,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/run_button', methods=['GET', 'POST'])
 def run_button():
-	app.logger.error('run_button proc')
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
 	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
-	app.logger.error("csv_files: ", csv_files, csv_files[0])
 	reader.load_dict(UPLOAD_FOLDER + '/' + csv_files[0])
 	global text
 	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
@@ -78,7 +76,6 @@ def upload_file():
 				filename = secure_filename(f.filename)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
-			app.logger.error("run_button")
 			run_button()
 
 @app.route('/', methods=['GET', 'POST'])
