@@ -155,9 +155,7 @@ class ChineseLanguageAssistantReader():
 		return text
 
 
-	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False, theme=pink):
-		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, \
-			base_font_size=base_font_size, english_scaling=english_scaling, theme=theme)
+	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False):
 		self.text_files = sorted(glob.glob(self.raw_chinese_files_dir + '/*.txt'))
 		print("translating: ", self.text_files)
 		text = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1>\
@@ -186,5 +184,12 @@ class ChineseLanguageAssistantReader():
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'
 			text += '</div></div>'
 			idx += 1
-		return '<!DOCTYPE html>' + style + header + "\n" + text + footer
+		return text
+
+	def wrap_raw_text(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False, theme=pink):
+		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, \
+			base_font_size=base_font_size, english_scaling=english_scaling, theme=theme)
+		text = self.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin, \
+			show_definitions=show_definitions, hide_non_vocab_pinyin=hide_non_vocab_pinyin)
+		return  '<!DOCTYPE html>' + style + header + "\n" + text + footer
 

@@ -33,10 +33,10 @@ def main():
 	
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = 'raw_chinese_files')
 	reader.load_dict('chinese_non_natively/vocab.csv')
-	text = reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=SHOW_PINYIN,
-														show_definitions=SHOW_VOCAB,
-														hide_non_vocab_pinyin=PINYIN_ONLY_ON_DEFINITIONS,
-														theme=THEME)
+	text = reader.wrap_raw_text(show_pinyin=SHOW_PINYIN,
+								show_definitions=SHOW_VOCAB,
+								hide_non_vocab_pinyin=PINYIN_ONLY_ON_DEFINITIONS,
+								theme=THEME)
 	browseLocal(text)
 
 if __name__ == "__main__":
