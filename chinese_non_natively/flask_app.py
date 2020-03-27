@@ -23,6 +23,7 @@ theme=pink
 dir_path = os.path.dirname(__file__)
 temp_hash = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
 UPLOAD_FOLDER = dir_path +  '/' + temp_hash
+os.makedirs(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
 
 page_head = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1> \
