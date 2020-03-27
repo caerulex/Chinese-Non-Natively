@@ -85,8 +85,9 @@ def upload_file():
 def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + text + html_definitions.footer
-	strToFile(doc, 'output.html')
-	return render_template('output.html')
+	out_path = os.path.join(app.config['UPLOAD_FOLDER'],'output.html')
+	strToFile(doc, out_path)
+	return render_template(out_path)
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
