@@ -16,6 +16,9 @@ import html_definitions
 from find_replace_chinese import ChineseLanguageAssistantReader, base_font_size, english_scaling, pink
 from export_html_and_browse import strToFile
 
+style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
+		english_scaling=english_scaling, theme=theme)
+
 show_pinyin=True
 pinyin_only_on_defs=True
 show_definitions=True
@@ -89,9 +92,6 @@ def reload():
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
-	style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
-		english_scaling=english_scaling, theme=theme)
-	
 	return '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + upload_form + button + \
 			text  + html_definitions.footer
