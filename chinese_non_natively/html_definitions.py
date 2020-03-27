@@ -85,6 +85,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			border-top:0.5em solid rgba(' + theme + ', ' + border_opacity +'); \
 			display: table; \
 			margin-bottom: 1%; \
+			margin-top: 2%; \
 			margin-left:auto; \
 			margin-right:auto;\
 			padding-right: 0em; \
@@ -187,7 +188,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			border:0.5em solid rgba(' + theme + ', ' + border_opacity +'); \
 			display: table; \
 			font-size: 120%; \
-			margin-bottom: -1%; \
+			margin-bottom: 1%; \
 			margin-top: -1%; \
 			margin-left:auto; \
 			margin-right:auto;\

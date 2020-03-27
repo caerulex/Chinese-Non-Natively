@@ -84,7 +84,7 @@ def upload_file():
 @app.route('/reload', methods=['GET', 'POST'])
 def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
-		page_head + text + html_definitions.footer
+		page_head + upload_form + text + html_definitions.footer
 	return render_template_string(doc)
 
 @app.route('/', methods=['GET', 'POST'])
