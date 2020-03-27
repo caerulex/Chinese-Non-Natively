@@ -29,12 +29,14 @@ page_head = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1> \
 	<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
 upload_form = '''
 	'<div id="toc_container"><h1>Upload new File</h1><ul class="toc_list">
-	<form method=post enctype=multipart/form-data>
+	<form action="/upload "method=post enctype=multipart/form-data>
 	<input type=file multiple="" name="file[]">
 	<input type=submit value=Upload>
 	</form>'</ul></div>'
 	'''
-button = '<button name="runButton" onclick="run_button()">Run</button>'
+buttom = '''<form action="/run_button" method="post">
+		<button type="submit" value="run" />
+		</form>'''
 global text
 text = ""
 
@@ -42,6 +44,7 @@ text = ""
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+@app.route('/run_button', methods=['GET', 'POST'])
 def run_button():
 	app.logger.error('run_button proc')
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
@@ -64,6 +67,7 @@ def allowed_file(filename):
 	return '.' in filename and \
 		   filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
 	if request.method == 'POST':
 		uploaded_files = request.files.getlist("file[]")
