@@ -13,11 +13,12 @@ base_font_size = 40
 english_scaling = 0.4
 pink = '153, 0, 17'
 
+dir_path = os.path.dirname(__file__)
 font = ImageFont.truetype(\
-	"fonts/DejaVuSans.ttf",\
+	dir_path + "/fonts/DejaVuSans.ttf",\
 	 int(base_font_size * english_scaling))
 chinese_font = ImageFont.truetype(\
-	"fonts/NotoSansCJK-Regular.ttc",\
+	dir_path + "/fonts/NotoSansCJK-Regular.ttc",\
 	 base_font_size)
 
 class ChineseLanguageAssistantReader():
