@@ -5,8 +5,8 @@ import glob
 from pypinyin import pinyin, load_phrases_dict
 import itertools
 from PIL import ImageFont
-from .html_definitions import header, footer, get_style, get_script
-from .pinyin_exceptions import exceptions as pinyin_exceptions
+from html_definitions import header, footer, get_style, get_script
+from pinyin_exceptions import exceptions as pinyin_exceptions
 load_phrases_dict(pinyin_exceptions)
 base_font_size = 40
 english_scaling = 0.4
