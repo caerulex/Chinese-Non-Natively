@@ -24,6 +24,25 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 				padding: 0; \
 				overflow-x: hidden; \
 		} \
+		.button { \
+			background-color: white; \
+			color: black; \
+  			border: 2px solid rgb(' + pink + '); \
+			border: none; \
+			color: white; \
+			padding: 16px 32px; \
+			text-align: center; \
+			text-decoration: none; \
+			display: inline-block; \
+			font-size: 16px; \
+			margin: 4px 2px; \
+			transition-duration: 0.4s; \
+			cursor: pointer; \
+		} \
+		.button:hover { \
+			background-color: rgb(' + pink + '); \
+			color: white; \
+			} \
 		div {\
 			margin:3%;\
 			box-shadow: ' + drop_shadow + '; \

@@ -21,11 +21,11 @@ ALLOWED_EXTENSIONS = {'txt', 'csv'}
 page_head = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1> \
 	<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
 upload_form = '''
-	<h1>Upload new File</h1>
+	'<div id="toc_container"><h1>Upload new File</h1><ul class="toc_list">
 	<form method=post enctype=multipart/form-data>
 	<input type=file name=file>
 	<input type=submit value=Upload>
-	</form>
+	</form>'</ul></div>'
 	'''
 button = '<button name="runButton" onclick="run_button()">Run</button>'
 global text
@@ -45,7 +45,7 @@ def upload_file():
 		if 'file' not in request.files:
 			flash('No file part')
 			return redirect(request.url)
-		file = request.files['file']
+		file = request.files['file[]']
 		# if user does not select file, browser also
 		# submit an empty part without filename
 		if file.filename == '':
