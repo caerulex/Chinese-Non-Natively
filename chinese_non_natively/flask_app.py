@@ -16,14 +16,14 @@ import html_definitions
 from find_replace_chinese import ChineseLanguageAssistantReader, base_font_size, english_scaling, pink
 from export_html_and_browse import strToFile
 
-style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
-		english_scaling=english_scaling, theme=theme)
-
 show_pinyin=True
 pinyin_only_on_defs=True
 show_definitions=True
 hide_non_vocab_pinyin=False
 theme=pink
+style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
+		english_scaling=english_scaling, theme=theme)
+
 dir_path = os.path.dirname(__file__)
 temp_hash = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
 UPLOAD_FOLDER = dir_path +  '/' + temp_hash
