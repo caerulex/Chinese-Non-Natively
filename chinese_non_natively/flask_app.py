@@ -16,13 +16,8 @@ import html_definitions
 from find_replace_chinese import ChineseLanguageAssistantReader, base_font_size, english_scaling, pink
 from export_html_and_browse import strToFile
 
-show_pinyin=True
-pinyin_only_on_defs=True
-show_definitions=True
 hide_non_vocab_pinyin=False
 theme=pink
-style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
-		english_scaling=english_scaling, theme=theme)
 
 dir_path = os.path.dirname(__file__)
 temp_hash = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
@@ -47,19 +42,21 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/run_button', methods=['GET', 'POST'])
 def run_button():
-	show_defs = show_definitions
-	show_only_vocab_pinyin = hide_non_vocab_pinyin
 	reader = ChineseLanguageAssistantReader(raw_chinese_files_dir = UPLOAD_FOLDER)
 	csv_files = sorted(glob.glob(UPLOAD_FOLDER + '/*.csv'))
-	if not csv_files:
-		show_defs = False
-	else:
-		reader.load_dict(csv_files[0])
-		show_only_vocab_pinyin = True
+	global hide_non_vocab_pinyin
 	global text
-	text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin,
-														show_definitions=show_defs,
-														hide_non_vocab_pinyin=show_only_vocab_pinyin)
+	if not csv_files:
+		hide_non_vocab_pinyin = False
+		text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=True,
+														show_definitions=False,
+														hide_non_vocab_pinyin=False)
+	else:
+		hide_non_vocab_pinyin = True
+		reader.load_dict(csv_files[0])
+		text += reader.wrap_raw_text_with_english_and_pinyin(show_pinyin=True,
+														show_definitions=True,
+														hide_non_vocab_pinyin=True)
 	print(text[0:20])
 	## Try to remove temp folder; if failed show an error using try...except on screen
 	try:
@@ -67,7 +64,7 @@ def run_button():
 	except OSError as e:
 		print ("Error: %s - %s." % (e.filename, e.strerror))
 	
-	return redirect('/reload')
+	return redirect('/view')
 
 def allowed_file(filename):
 	return '.' in filename and \
@@ -87,8 +84,10 @@ def upload_file():
 			return redirect('/run_button')
 	return redirect('/')
 
-@app.route('/reload', methods=['GET', 'POST'])
-def reload():
+@app.route('/view', methods=['GET', 'POST'])
+def view():
+	style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
+		english_scaling=english_scaling, theme=theme)
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + text + html_definitions.footer
 	return render_template_string(doc)
@@ -106,6 +105,8 @@ def main():
 	global text
 	text = ""
 	gen_new_path()
+	style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, base_font_size=base_font_size, \
+		english_scaling=english_scaling, theme=theme)
 	return '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + upload_form + html_definitions.footer
 	
