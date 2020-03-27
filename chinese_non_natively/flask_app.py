@@ -23,7 +23,7 @@ page_head = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1> \
 upload_form = '''
 	'<div id="toc_container"><h1>Upload new File</h1><ul class="toc_list">
 	<form method=post enctype=multipart/form-data>
-	<input type=file name=file>
+	<input type=file multiple="" name="file[]">
 	<input type=submit value=Upload>
 	</form>'</ul></div>'
 	'''
