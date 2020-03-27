@@ -27,7 +27,6 @@ style = html_definitions.get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, 
 dir_path = os.path.dirname(__file__)
 temp_hash = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
 UPLOAD_FOLDER = dir_path +  '/' + temp_hash
-os.makedirs(UPLOAD_FOLDER)
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
 
 page_head = "<a name=top><div id=anchor_0><h1><a href='/'>Chinese Non-Natively</a></h1> \
@@ -76,6 +75,7 @@ def upload_file():
 		for f in uploaded_files:
 			if f and allowed_file(f.filename):
 				filename = secure_filename(f.filename)
+				os.makedirs(UPLOAD_FOLDER)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
 			return redirect('/run_button')

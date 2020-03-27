@@ -158,9 +158,7 @@ class ChineseLanguageAssistantReader():
 	def wrap_raw_text_with_english_and_pinyin(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False):
 		self.text_files = sorted(glob.glob(self.raw_chinese_files_dir + '/*.txt'))
 		print("translating: ", self.text_files)
-		text = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1>\
-				<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
-		text += self.add_toc()
+		text = self.add_toc()
 		idx = 1
 		for file_name in self.text_files:
 			file_contents = self.get_file_contents(file_name)
@@ -189,7 +187,9 @@ class ChineseLanguageAssistantReader():
 	def wrap_raw_text(self, show_pinyin=True, show_definitions=True, hide_non_vocab_pinyin=False, theme=pink):
 		style = get_style(hide_non_vocab_pinyin=hide_non_vocab_pinyin, \
 			base_font_size=base_font_size, english_scaling=english_scaling, theme=theme)
+		page_header = "<a name=top><div id=anchor_0><h1>Chinese Non-Natively</h1>\
+				<h2 id=fancy_chinese>让中文浅显易懂</h2></div></a>"
 		text = self.wrap_raw_text_with_english_and_pinyin(show_pinyin=show_pinyin, \
 			show_definitions=show_definitions, hide_non_vocab_pinyin=hide_non_vocab_pinyin)
-		return  '<!DOCTYPE html>' + style + header + "\n" + text + footer
+		return  '<!DOCTYPE html>' + style + header + "\n" + page_header + text + footer
 
