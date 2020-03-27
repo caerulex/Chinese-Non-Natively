@@ -62,7 +62,7 @@ def run_button():
 	except OSError as e:
 		print ("Error: %s - %s." % (e.filename, e.strerror))
 	
-	return redirect('/')
+	return redirect('/reload')
 
 def allowed_file(filename):
 	return '.' in filename and \
@@ -78,9 +78,10 @@ def upload_file():
 				filename = secure_filename(f.filename)
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
-			run_button()
+			return redirect('/run_button')
 	return redirect('/')
 
+@app.route('/reload', methods=['GET', 'POST'])
 def reload():
 	doc = '<!DOCTYPE html>' + style + html_definitions.header + "\n" + \
 		page_head + text + html_definitions.footer
