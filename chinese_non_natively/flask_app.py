@@ -60,7 +60,7 @@ def run_button():
 		shutil.rmtree(UPLOAD_FOLDER)
 	except OSError as e:
 		print ("Error: %s - %s." % (e.filename, e.strerror))
-	return redirect(request.url)
+	return redirect('/')
 
 def allowed_file(filename):
 	return '.' in filename and \
@@ -77,6 +77,7 @@ def upload_file():
 				f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 		if uploaded_files:
 			run_button()
+	return 'OK'
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
