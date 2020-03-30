@@ -1,5 +1,5 @@
 # HTML to be injected
-header = '<html><body><div id=light_bg>'
+header = '<html><meta name="viewport" content="width=device-width, initial-scale=1.0"><body><div id=light_bg>'
 footer = '</div></body></html>'
 pink = '153, 0, 17'
 border_opacity = str(0.2)
@@ -18,11 +18,11 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 	style += '<style> \
 		body { \
 			background: rgba(' + theme + ', 0.20);	\
-			    width: 100%; \
-				height: 100%; \
-				margin: 0; \
-				padding: 0; \
-				overflow-x: hidden; \
+			width: 100%; \
+			height: 100%; \
+			margin: 0; \
+			padding: 0; \
+			overflow-x: hidden; \
 		} \
 		.button { \
 			background-color: white; \
@@ -73,6 +73,9 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		#light_bg { \
 			background: rgba(255, 255, 255, 0.75)	\
 		} \
+		#light_bg div { \
+			min-width: 600px; \
+		} \
 		[id^="anchor_"] { \
 			margin-top: -0.75%; \
 			box-shadow: none; \
@@ -116,6 +119,8 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		} \
 		.line-text {\
 			position: relative;\
+			height: 100%; \
+			min-width: 800px; \
 			font-size: ' + str(round(base_font_size / 12)*100) + '%;\
 			line-height: 3.0;\
 			padding-top: 0.5%; \
@@ -124,6 +129,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			margin-left:auto; \
 			margin-right:auto;\
 			justify-content: center; \
+			overflow-x: auto!important; \
 		}\
 		#bg { \
 			background-color: #ffffff; \

@@ -219,9 +219,9 @@ cpdef str group_and_format(list mega):
 			chn, pin = process_mini_phrase(phrase)
 			final_phrase += chn
 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
-		elif len(phrase) > 20:
-			final_phrase += add_span(process_mini_phrase(phrase[:20]))
-			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+		elif len(phrase) > 12:
+			final_phrase += add_span(process_mini_phrase(phrase[:12]))
+			final_phrase += add_span(process_mini_phrase(phrase[12:]))
 		else:
 			final_phrase += add_span(process_mini_phrase(phrase))
 	#print(final_phrase)

@@ -15,7 +15,7 @@ def main():
 	pink = '153, 0, 17'
 	teal = '0, 135, 153'
 
-	SHOW_PINYIN, SHOW_VOCAB, PINYIN_ONLY_ON_DEFINITIONS, THEME = True, True, False, pink
+	SHOW_PINYIN, SHOW_VOCAB, PINYIN_ONLY_ON_DEFINITIONS, THEME = True, False, False, teal
 	if args.hide_pinyin:
 		SHOW_PINYIN = False
 	if args.hide_vocab:

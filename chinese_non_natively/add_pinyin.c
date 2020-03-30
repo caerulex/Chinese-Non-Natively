@@ -1470,7 +1470,6 @@ static PyObject *__pyx_float_0_4;
 static PyObject *__pyx_int_2;
 static PyObject *__pyx_int_3;
 static PyObject *__pyx_int_12;
-static PyObject *__pyx_int_20;
 static PyObject *__pyx_int_100;
 static PyObject *__pyx_int_210;
 static PyObject *__pyx_slice__6;
@@ -5655,7 +5654,7 @@ static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_mega, C
  * 			chn, pin = process_mini_phrase(phrase)
  * 			final_phrase += chn             # <<<<<<<<<<<<<<
  * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 20:
+ * 		elif len(phrase) > 12:
  */
       __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_final_phrase, __pyx_v_chn); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 220, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
@@ -5676,22 +5675,22 @@ static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_mega, C
     /* "add_pinyin.pyx":222
  * 			final_phrase += chn
  * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 20:             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+ * 		elif len(phrase) > 12:             # <<<<<<<<<<<<<<
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
  */
     __pyx_t_8 = PyObject_Length(__pyx_v_phrase); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(0, 222, __pyx_L1_error)
-    __pyx_t_6 = ((__pyx_t_8 > 20) != 0);
+    __pyx_t_6 = ((__pyx_t_8 > 12) != 0);
     if (__pyx_t_6) {
 
       /* "add_pinyin.pyx":223
  * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 20:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+ * 		elif len(phrase) > 12:
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))             # <<<<<<<<<<<<<<
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
  * 		else:
  */
-      __pyx_t_4 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 0, 20, NULL, NULL, &__pyx_slice__6, 0, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 0, 12, NULL, NULL, &__pyx_slice__6, 0, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       if (!(likely(PyList_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 223, __pyx_L1_error)
       __pyx_t_7 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_t_4), 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 223, __pyx_L1_error)
@@ -5707,13 +5706,13 @@ static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_mega, C
       __pyx_t_7 = 0;
 
       /* "add_pinyin.pyx":224
- * 		elif len(phrase) > 20:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))             # <<<<<<<<<<<<<<
+ * 		elif len(phrase) > 12:
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))             # <<<<<<<<<<<<<<
  * 		else:
  * 			final_phrase += add_span(process_mini_phrase(phrase))
  */
-      __pyx_t_7 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 20, 0, NULL, NULL, &__pyx_slice__7, 1, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 224, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 12, 0, NULL, NULL, &__pyx_slice__7, 1, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 224, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       if (!(likely(PyList_CheckExact(__pyx_t_7))||((__pyx_t_7) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_7)->tp_name), 0))) __PYX_ERR(0, 224, __pyx_L1_error)
       __pyx_t_4 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_t_7), 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 224, __pyx_L1_error)
@@ -5731,15 +5730,15 @@ static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_mega, C
       /* "add_pinyin.pyx":222
  * 			final_phrase += chn
  * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 20:             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+ * 		elif len(phrase) > 12:             # <<<<<<<<<<<<<<
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
  */
       goto __pyx_L5;
     }
 
     /* "add_pinyin.pyx":226
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
  * 		else:
  * 			final_phrase += add_span(process_mini_phrase(phrase))             # <<<<<<<<<<<<<<
  * 	#print(final_phrase)
@@ -6639,23 +6638,23 @@ static int __Pyx_InitCachedConstants(void) {
 
   /* "add_pinyin.pyx":223
  * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 20:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))
+ * 		elif len(phrase) > 12:
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))             # <<<<<<<<<<<<<<
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
  * 		else:
  */
-  __pyx_slice__6 = PySlice_New(Py_None, __pyx_int_20, Py_None); if (unlikely(!__pyx_slice__6)) __PYX_ERR(0, 223, __pyx_L1_error)
+  __pyx_slice__6 = PySlice_New(Py_None, __pyx_int_12, Py_None); if (unlikely(!__pyx_slice__6)) __PYX_ERR(0, 223, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__6);
   __Pyx_GIVEREF(__pyx_slice__6);
 
   /* "add_pinyin.pyx":224
- * 		elif len(phrase) > 20:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:20]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[20:]))             # <<<<<<<<<<<<<<
+ * 		elif len(phrase) > 12:
+ * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
+ * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))             # <<<<<<<<<<<<<<
  * 		else:
  * 			final_phrase += add_span(process_mini_phrase(phrase))
  */
-  __pyx_slice__7 = PySlice_New(__pyx_int_20, Py_None, Py_None); if (unlikely(!__pyx_slice__7)) __PYX_ERR(0, 224, __pyx_L1_error)
+  __pyx_slice__7 = PySlice_New(__pyx_int_12, Py_None, Py_None); if (unlikely(!__pyx_slice__7)) __PYX_ERR(0, 224, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__7);
   __Pyx_GIVEREF(__pyx_slice__7);
 
@@ -6694,7 +6693,6 @@ static int __Pyx_InitGlobals(void) {
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_3 = PyInt_FromLong(3); if (unlikely(!__pyx_int_3)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_12 = PyInt_FromLong(12); if (unlikely(!__pyx_int_12)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_20 = PyInt_FromLong(20); if (unlikely(!__pyx_int_20)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_100 = PyInt_FromLong(100); if (unlikely(!__pyx_int_100)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_210 = PyInt_FromLong(210); if (unlikely(!__pyx_int_210)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
