@@ -16,15 +16,22 @@ import numpy as np
 from itertools import groupby
 from operator import itemgetter
 import math
+import logging
 load_phrases_dict(pinyin_exceptions)
 base_font_size = round(40 / 12)*12 #36
 english_scaling = 0.4 #14
 pink = '153, 0, 17'
 
+#Creating an object 
+logger=logging.getLogger() 
+  
+#Setting the threshold of logger to DEBUG 
+logger.setLevel(logging.DEBUG)
+
 #dir_path = os.path.dirname(__file__)
 dir_path = os.path.abspath(os.path.dirname(sys.argv[0]))
 print (dir_path)
-
+logging.error('path for imagefont: ', dir_path + "/fonts/Times_New_Roman.ttf")
 font = ImageFont.truetype(dir_path + "/fonts/Times_New_Roman.ttf", 100)
 chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
 
