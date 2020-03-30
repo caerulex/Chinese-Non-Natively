@@ -1,4 +1,6 @@
 # - *- coding: utf- 8 - *-
+#!python
+#cython: language_level=3.6
 import re
 import csv
 import os, sys
