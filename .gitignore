@@ -130,3 +130,6 @@ dmypy.json
 
 # Repo Specific
 *.html
+ce_dict*
+cedict*
+*.json

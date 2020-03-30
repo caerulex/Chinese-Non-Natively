@@ -10,6 +10,10 @@ requirements:
 generate:
 	python -m chinese_non_natively $(ARGS)
 
+compile_gen:
+	cd chinese_non_natively/ && easycython --debugmode add_pinyin.pyx && cd ..
+	python -m chinese_non_natively $(ARGS)
+
 build:
 	docker build -t $(IMAGE_NAME):$(VERSION) -f docker/Dockerfile .
 

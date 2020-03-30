@@ -116,7 +116,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		} \
 		.line-text {\
 			position: relative;\
-			font-size: ' + str(base_font_size) + 'px;\
+			font-size: ' + str(round(base_font_size / 12)*100) + '%;\
 			line-height: 3.0;\
 			padding-top: 0.5%; \
 			padding-left: 2%; \
@@ -140,9 +140,10 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		.pinyin {\
 			vertical-align: middle;\
 			padding-right: .3rem!important;\
-			padding-left: .3rem!important;\
+			padding-left: 0rem!important;\
 			white-space: pre;\
 			z-index: 21; \
+			font-family: "Times New Roman";\
 		}\
 		.overlay #english{\
 			text-indent: 0px;\
@@ -154,7 +155,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			position: absolute;\
 			display:initial;\
 			padding-left: .4rem!important;\
-			padding-top: 5.5rem!important;\
+			padding-top: 7rem!important;\
 			z-index: -1;\
 			user-select: none; \
 			text-align:left; \
@@ -175,7 +176,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			user-select: none; \
 			text-align:justify; \
 			white-space: pre; \
-			font-family: "DejaVuSans"; \
+			font-family: "Times New Roman"; \
 		}\
 		.overlay .pinyin span{\
 			color: rgb(100, 62, 70);\

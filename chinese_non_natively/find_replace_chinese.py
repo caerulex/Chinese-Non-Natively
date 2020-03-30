@@ -8,18 +8,16 @@ import itertools
 from PIL import ImageFont
 from html_definitions import header, footer, get_style, get_script
 from pinyin_exceptions import exceptions as pinyin_exceptions
+import time
+from add_pinyin import add_pinyin
 load_phrases_dict(pinyin_exceptions)
-base_font_size = 40
-english_scaling = 0.4
+base_font_size = round(40 / 12)*12 #36
+english_scaling = 0.4 #14
 pink = '153, 0, 17'
 
 dir_path = os.path.dirname(__file__)
-font = ImageFont.truetype(\
-	dir_path + "/fonts/DejaVuSans.ttf",\
-	 int(base_font_size * english_scaling))
-chinese_font = ImageFont.truetype(\
-	dir_path + "/fonts/NotoSansCJK-Regular.ttc",\
-	 base_font_size)
+font = ImageFont.truetype(dir_path + "/fonts/Times_New_Roman.ttf", 100)
+chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 250)
 
 class ChineseLanguageAssistantReader():
 
@@ -28,6 +26,7 @@ class ChineseLanguageAssistantReader():
 		self.raw_chinese_files_dir = raw_chinese_files_dir
 
 	def calculate_width_chinese(self, text):
+		#return len(text)*60
 		return chinese_font.getsize(text)[0]
 
 	def load_dict(self, chinese_english_dict_name):
@@ -37,71 +36,9 @@ class ChineseLanguageAssistantReader():
 				if len(row) > 1:
 					chn = row[0]
 					eng = row[1]
-					chinese_width = self.calculate_width_chinese(chn)
+					chinese_width = len(chn)*base_font_size
 					self.mapping_dict.update({chn:'<span class="overlay"><span id=english style="width:' + str(chinese_width) + 'px">' \
 						+ eng + "</span>" + chn + "</span>"})
-
-	def calculate_num_spaces(self, text):
-		text_no_space = list(filter(str.strip, list(text)))
-		num_spaces = len(list(text)) - len(text_no_space)
-		return num_spaces
-
-	def stretch_spaces(self, text):
-		replacements = 1
-		total_space_width = self.calculate_num_spaces(text) * self.space_width
-		difference_to_fill_with_whitespace = self.chinese_width - self.english_width
-
-		if total_space_width > 0:
-			while difference_to_fill_with_whitespace > 0:
-				difference_to_fill_with_whitespace -= total_space_width
-				replacements += 1
-			text = re.sub(' ', ' ' * (replacements+1), text)
-		return text
-
-	def stretch_width_english_text(self, text):
-		self.english_width = font.getsize(text)[0]
-		self.space_width = font.getsize(" ")[0]
-		text = self.stretch_spaces(text)
-		return re.sub(' ', '&nbsp', text)
-
-	def process_phrase(self, pinyin_text, chinese_text):
-		self.chinese_width = self.calculate_width_chinese(chinese_text)
-		stretched_pinyin_text = self.stretch_width_english_text(pinyin_text)
-		phrase = '<span class="pinyin"><span>' \
-			+ stretched_pinyin_text  + "</span>" + chinese_text + "</span>"
-		return phrase
-
-	def is_chinese_char(self, char):
-		return 0x4e00 <= ord(char) <= 0x9fff
-
-	def find_chinese_phrase(self, text_list, phrase_end_ind):
-		phrase_start_ind = phrase_end_ind
-		# parse all chinese characters until a non-chinese character appears
-		while self.is_chinese_char(text_list[phrase_end_ind]):
-			phrase_end_ind += 1
-		# skip index i to the end of phrase to avoid re-parsing part of the phrase
-		pinyin_text = " ".join(list(itertools.chain.from_iterable(pinyin(text_list[phrase_start_ind:phrase_end_ind]))))
-		chinese_text = "".join(text_list[phrase_start_ind:phrase_end_ind])
-		phrase_text = self.process_phrase(pinyin_text, chinese_text)
-		return phrase_text, phrase_end_ind
-
-	def add_pinyin(self,text):
-		text_list = list(text)
-		final_text = ""
-		i = 0
-		while i < len(text_list):
-			# if we encounter a chinese character, begin processing
-			if self.is_chinese_char(text_list[i]):
-				phrase_text, i = self.find_chinese_phrase(text_list, i)
-				final_text += phrase_text
-			else:
-				final_text += str(text_list[i])
-				# add a <br> tag in html if there is a new line in the raw text
-				if str(text_list[i]) == '\n':
-					final_text += '<br>'
-				# increment i by 1
-				i += 1
-		return final_text
 
 	def add_english_definitions(self, text):
 		pattern = re.compile(r'|'.join(re.escape(key) for key in self.mapping_dict.keys()))
@@ -164,19 +101,28 @@ class ChineseLanguageAssistantReader():
 			file_contents = self.get_file_contents(file_name)
 			
 			if show_definitions:
+				tic = time.perf_counter()
 				subbed_text, num_subs = self.add_english_definitions(file_contents)
+				toc = time.perf_counter()
+				print(f"subbed vocab in {toc - tic:0.4f} seconds")
 				percent_subbed = num_subs / len(file_contents)
 				text += self.add_nav(idx,file_name,percent_subbed)
 				text += '\n<div><div class="line-text" id=bg>'
 				if show_pinyin:
-					text += self.add_pinyin(subbed_text)
+					tic = time.perf_counter()
+					text += add_pinyin(subbed_text)
+					toc = time.perf_counter()
+					print(f"stretched width in {toc - tic:0.4f} seconds")
 				else:
 					text += subbed_text
 			# if only pinyin, no definitions
 			elif show_pinyin:
+				tic = time.perf_counter()
 				text += self.add_nav(idx,file_name)
 				text += '\n<div><div class="line-text" id=bg>'
-				text += self.add_pinyin(file_contents)
+				text += add_pinyin(file_contents)
+				toc = time.perf_counter()
+				print(f"stretched width in {toc - tic:0.4f} seconds")
 			# neither show pinyin or definitions; raw text
 			else:
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'
