@@ -112,7 +112,7 @@ class ChineseLanguageAssistantReader():
 					tic = time.perf_counter()
 					text += add_pinyin(subbed_text)
 					toc = time.perf_counter()
-					print(f"stretched width in {toc - tic:0.4f} seconds")
+					print(f"added pinyin in {toc - tic:0.4f} seconds")
 				else:
 					text += subbed_text
 			# if only pinyin, no definitions
@@ -122,7 +122,7 @@ class ChineseLanguageAssistantReader():
 				text += '\n<div><div class="line-text" id=bg>'
 				text += add_pinyin(file_contents)
 				toc = time.perf_counter()
-				print(f"stretched width in {toc - tic:0.4f} seconds")
+				print(f"added pinyin in {toc - tic:0.4f} seconds")
 			# neither show pinyin or definitions; raw text
 			else:
 				text += '<p>' + re.sub('\n', '<br>', file_contents) + '</p>'

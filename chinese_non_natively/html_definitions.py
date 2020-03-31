@@ -14,7 +14,8 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 		"<link href='https://fonts.googleapis.com/css?family=Alegreya' rel='stylesheet'>" \
 		"<link href='https://fonts.googleapis.com/css?family=Alegreya SC' rel='stylesheet'>" \
 		"<link href='https://fonts.googleapis.com/css?family=Alegreya Sans' rel='stylesheet'>" \
-		"<link href='https://fonts.googleapis.com/css?family=Alegreya Sans SC' rel='stylesheet'>"
+		"<link href='https://fonts.googleapis.com/css?family=Alegreya Sans SC' rel='stylesheet'>"\
+		"<link href='https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap' rel='stylesheet'>"
 	style += '<style> \
 		body { \
 			background: rgba(' + theme + ', 0.20);	\
@@ -149,7 +150,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			padding-left: 0rem!important;\
 			white-space: pre;\
 			z-index: 21; \
-			font-family: "Times New Roman";\
+			font-family: "Ubuntu Mono", monospace;\
 		}\
 		.overlay #english{\
 			text-indent: 0px;\
@@ -182,7 +183,7 @@ def get_style(base_font_size=40, english_scaling=0.4, hide_non_vocab_pinyin=Fals
 			user-select: none; \
 			text-align:justify; \
 			white-space: pre; \
-			font-family: "Times New Roman"; \
+			font-family: "Ubuntu Mono", monospace; \
 		}\
 		.overlay .pinyin span{\
 			color: rgb(100, 62, 70);\

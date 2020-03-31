@@ -1,5 +1,5 @@
 IMAGE_NAME = html-server-image
-VERSION = v1
+VERSION = v2
 DIR = $(shell pwd)
 HTML_FILE = "tempBrowseLocal.html"
 ARGS=
@@ -19,6 +19,6 @@ build:
 
 run:
 	docker run -d \
-	-p 8081:8080 \
+	-p 8082:8080 \
 	-v $(DIR)/$(HTML_FILE):/usr/share/nginx/html/index.html \
 	$(IMAGE_NAME):$(VERSION)

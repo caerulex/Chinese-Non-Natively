@@ -25,7 +25,7 @@ END: Cython Metadata */
     #error Cython requires Python 2.6+ or Python 3.3+.
 #else
 #define CYTHON_ABI "0_28_3"
-#define CYTHON_FUTURE_DIVISION 0
+#define CYTHON_FUTURE_DIVISION 1
 #include <stddef.h>
 #ifndef offsetof
   #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
@@ -867,41 +867,29 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject
 /* GetBuiltinName.proto */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name);
 
+/* ArgTypeTest.proto */
+#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
+    ((likely((Py_TYPE(obj) == type) | (none_allowed && (obj == Py_None)))) ? 1 :\
+        __Pyx__ArgTypeTest(obj, type, name, exact))
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
+
+/* UnicodeAsUCS4.proto */
+static CYTHON_INLINE Py_UCS4 __Pyx_PyUnicode_AsPy_UCS4(PyObject*);
+
+/* object_ord.proto */
+#if PY_MAJOR_VERSION >= 3
+#define __Pyx_PyObject_Ord(c)\
+    (likely(PyUnicode_Check(c)) ? (long)__Pyx_PyUnicode_AsPy_UCS4(c) : __Pyx__PyObject_Ord(c))
+#else
+#define __Pyx_PyObject_Ord(c) __Pyx__PyObject_Ord(c)
+#endif
+static long __Pyx__PyObject_Ord(PyObject* c);
+
+/* ExtTypeTest.proto */
+static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type);
+
 /* GetModuleGlobalName.proto */
 static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name);
-
-/* PyCFunctionFastCall.proto */
-#if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
-#else
-#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
-#endif
-
-/* PyFunctionFastCall.proto */
-#if CYTHON_FAST_PYCALL
-#define __Pyx_PyFunction_FastCall(func, args, nargs)\
-    __Pyx_PyFunction_FastCallDict((func), (args), (nargs), NULL)
-#if 1 || PY_VERSION_HEX < 0x030600B1
-static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, int nargs, PyObject *kwargs);
-#else
-#define __Pyx_PyFunction_FastCallDict(func, args, nargs, kwargs) _PyFunction_FastCallDict(func, args, nargs, kwargs)
-#endif
-#endif
-
-/* PyObjectCall.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
-#else
-#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
-#endif
-
-/* PyObjectCallMethO.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
-#endif
-
-/* PyObjectCallOneArg.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
 
 /* GetItemInt.proto */
 #define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
@@ -924,6 +912,114 @@ static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize
 static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
 static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
                                                      int is_list, int wraparound, int boundscheck);
+
+/* PyFunctionFastCall.proto */
+#if CYTHON_FAST_PYCALL
+#define __Pyx_PyFunction_FastCall(func, args, nargs)\
+    __Pyx_PyFunction_FastCallDict((func), (args), (nargs), NULL)
+#if 1 || PY_VERSION_HEX < 0x030600B1
+static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, int nargs, PyObject *kwargs);
+#else
+#define __Pyx_PyFunction_FastCallDict(func, args, nargs, kwargs) _PyFunction_FastCallDict(func, args, nargs, kwargs)
+#endif
+#endif
+
+/* PyCFunctionFastCall.proto */
+#if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
+#else
+#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
+#endif
+
+/* PyObjectCall.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+#else
+#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
+#endif
+
+/* RaiseTooManyValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
+
+/* RaiseNeedMoreValuesToUnpack.proto */
+static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
+
+/* IterFinish.proto */
+static CYTHON_INLINE int __Pyx_IterFinish(void);
+
+/* UnpackItemEndCheck.proto */
+static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected);
+
+/* ListAppend.proto */
+#if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
+static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
+    PyListObject* L = (PyListObject*) list;
+    Py_ssize_t len = Py_SIZE(list);
+    if (likely(L->allocated > len) & likely(len > (L->allocated >> 1))) {
+        Py_INCREF(x);
+        PyList_SET_ITEM(list, len, x);
+        Py_SIZE(list) = len+1;
+        return 0;
+    }
+    return PyList_Append(list, x);
+}
+#else
+#define __Pyx_PyList_Append(L,x) PyList_Append(L,x)
+#endif
+
+/* RaiseNoneIterError.proto */
+static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void);
+
+/* SliceTupleAndList.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyList_GetSlice(PyObject* src, Py_ssize_t start, Py_ssize_t stop);
+static CYTHON_INLINE PyObject* __Pyx_PyTuple_GetSlice(PyObject* src, Py_ssize_t start, Py_ssize_t stop);
+#else
+#define __Pyx_PyList_GetSlice(seq, start, stop)   PySequence_GetSlice(seq, start, stop)
+#define __Pyx_PyTuple_GetSlice(seq, start, stop)  PySequence_GetSlice(seq, start, stop)
+#endif
+
+/* PyObjectCallMethO.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
+#endif
+
+/* PyObjectCallOneArg.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
+
+/* PyObjectCallNoArg.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
+#else
+#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
+#endif
+
+/* PyObjectFormat.proto */
+#if CYTHON_USE_UNICODE_WRITER
+static PyObject* __Pyx_PyObject_Format(PyObject* s, PyObject* f);
+#else
+#define __Pyx_PyObject_Format(s, f) PyObject_Format(s, f)
+#endif
+
+/* IncludeStringH.proto */
+#include <string.h>
+
+/* JoinPyUnicode.proto */
+static PyObject* __Pyx_PyUnicode_Join(PyObject* value_tuple, Py_ssize_t value_count, Py_ssize_t result_ulength,
+                                      Py_UCS4 max_char);
+
+/* ObjectGetItem.proto */
+#if CYTHON_USE_TYPE_SLOTS
+static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject* key);
+#else
+#define __Pyx_PyObject_GetItem(obj, key)  PyObject_GetItem(obj, key)
+#endif
+
+/* Import.proto */
+static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
+
+/* ImportFrom.proto */
+static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
 
 /* PyThreadStateGet.proto */
 #if CYTHON_FAST_THREAD_STATE
@@ -961,119 +1057,6 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 #define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
 #endif
 
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
-
-/* ArgTypeTest.proto */
-#define __Pyx_ArgTypeTest(obj, type, none_allowed, name, exact)\
-    ((likely((Py_TYPE(obj) == type) | (none_allowed && (obj == Py_None)))) ? 1 :\
-        __Pyx__ArgTypeTest(obj, type, name, exact))
-static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
-
-/* None.proto */
-static CYTHON_INLINE int __Pyx_div_int(int, int);
-
-/* UnaryNegOverflows.proto */
-#define UNARY_NEG_WOULD_OVERFLOW(x)\
-        (((x) < 0) & ((unsigned long)(x) == 0-(unsigned long)(x)))
-
-/* RaiseArgTupleInvalid.proto */
-static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
-    Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
-
-/* RaiseDoubleKeywords.proto */
-static void __Pyx_RaiseDoubleKeywordsError(const char* func_name, PyObject* kw_name);
-
-/* ParseKeywords.proto */
-static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
-    PyObject *kwds2, PyObject *values[], Py_ssize_t num_pos_args,\
-    const char* function_name);
-
-/* UnpackUnboundCMethod.proto */
-typedef struct {
-    PyObject *type;
-    PyObject **method_name;
-    PyCFunction func;
-    PyObject *method;
-    int flag;
-} __Pyx_CachedCFunction;
-
-/* CallUnboundCMethod1.proto */
-static PyObject* __Pyx__CallUnboundCMethod1(__Pyx_CachedCFunction* cfunc, PyObject* self, PyObject* arg);
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_CallUnboundCMethod1(__Pyx_CachedCFunction* cfunc, PyObject* self, PyObject* arg);
-#else
-#define __Pyx_CallUnboundCMethod1(cfunc, self, arg)  __Pyx__CallUnboundCMethod1(cfunc, self, arg)
-#endif
-
-/* UnicodeAsUCS4.proto */
-static CYTHON_INLINE Py_UCS4 __Pyx_PyUnicode_AsPy_UCS4(PyObject*);
-
-/* object_ord.proto */
-#if PY_MAJOR_VERSION >= 3
-#define __Pyx_PyObject_Ord(c)\
-    (likely(PyUnicode_Check(c)) ? (long)__Pyx_PyUnicode_AsPy_UCS4(c) : __Pyx__PyObject_Ord(c))
-#else
-#define __Pyx_PyObject_Ord(c) __Pyx__PyObject_Ord(c)
-#endif
-static long __Pyx__PyObject_Ord(PyObject* c);
-
-/* ExtTypeTest.proto */
-static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type);
-
-/* RaiseTooManyValuesToUnpack.proto */
-static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
-
-/* RaiseNeedMoreValuesToUnpack.proto */
-static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index);
-
-/* IterFinish.proto */
-static CYTHON_INLINE int __Pyx_IterFinish(void);
-
-/* UnpackItemEndCheck.proto */
-static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected);
-
-/* ListAppend.proto */
-#if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
-static CYTHON_INLINE int __Pyx_PyList_Append(PyObject* list, PyObject* x) {
-    PyListObject* L = (PyListObject*) list;
-    Py_ssize_t len = Py_SIZE(list);
-    if (likely(L->allocated > len) & likely(len > (L->allocated >> 1))) {
-        Py_INCREF(x);
-        PyList_SET_ITEM(list, len, x);
-        Py_SIZE(list) = len+1;
-        return 0;
-    }
-    return PyList_Append(list, x);
-}
-#else
-#define __Pyx_PyList_Append(L,x) PyList_Append(L,x)
-#endif
-
-/* PyObjectCallNoArg.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
-#else
-#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
-#endif
-
-/* RaiseNoneIterError.proto */
-static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void);
-
-/* SliceObject.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(
-        PyObject* obj, Py_ssize_t cstart, Py_ssize_t cstop,
-        PyObject** py_start, PyObject** py_stop, PyObject** py_slice,
-        int has_cstart, int has_cstop, int wraparound);
-
-/* Import.proto */
-static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level);
-
-/* ImportFrom.proto */
-static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
-
 /* CLineInTraceback.proto */
 #ifdef CYTHON_CLINE_IN_TRACEBACK
 #define __Pyx_CLineForTraceback(tstate, c_line)  (((CYTHON_CLINE_IN_TRACEBACK)) ? c_line : 0)
@@ -1102,19 +1085,6 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
-
-/* Print.proto */
-static int __Pyx_Print(PyObject*, PyObject *, int);
-#if CYTHON_COMPILING_IN_PYPY || PY_MAJOR_VERSION >= 3
-static PyObject* __pyx_print = 0;
-static PyObject* __pyx_print_kwargs = 0;
-#endif
-
-/* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
-
-/* PrintOne.proto */
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o);
 
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
@@ -1241,27 +1211,16 @@ static PyTypeObject *__pyx_ptype_7cpython_7complex_complex = 0;
 /* Module declarations from 'cpython' */
 
 /* Module declarations from 'add_pinyin' */
-static int __pyx_v_10add_pinyin_space_width;
-static int __pyx_f_10add_pinyin_calculate_width_chinese(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static int __pyx_f_10add_pinyin_calculate_num_spaces(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_char_space_old(PyObject *, PyObject *, int, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_char_space(PyObject *, PyObject *, int, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text_old(PyObject *, PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_phrase_old(PyObject *, PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text(PyObject *, PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_unzip(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_phrase(PyObject *, int __pyx_skip_dispatch); /*proto*/
+static int __pyx_v_10add_pinyin_chinese_width;
+static int __pyx_v_10add_pinyin_char_width;
+static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text(PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyBoolObject *__pyx_f_10add_pinyin_is_chinese_char(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyBoolObject *__pyx_f_10add_pinyin_sort_key_true(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyBoolObject *__pyx_f_10add_pinyin_sort_key_false(PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *, int __pyx_skip_dispatch); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_split_phrases(PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_add_span(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_strip_tuple(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_strip_extra_col(PyObject *, int __pyx_skip_dispatch); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_mini_phrase(PyObject *, int __pyx_skip_dispatch); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_group_phrases(PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *, int __pyx_skip_dispatch); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_apply_pinyin(PyObject *, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *, int __pyx_skip_dispatch); /*proto*/
 #define __Pyx_MODULE_NAME "add_pinyin"
 extern int __pyx_module_is_main_add_pinyin;
@@ -1269,49 +1228,44 @@ int __pyx_module_is_main_add_pinyin = 0;
 
 /* Implementation of 'add_pinyin' */
 static PyObject *__pyx_builtin_round;
-static PyObject *__pyx_builtin_filter;
-static PyObject *__pyx_builtin_range;
+static PyObject *__pyx_builtin_print;
 static PyObject *__pyx_builtin_zip;
 static const char __pyx_k_[] = " ";
-static const char __pyx_k__2[] = "  ";
-static const char __pyx_k__3[] = "";
-static const char __pyx_k__4[] = "\n";
+static const char __pyx_k__2[] = "\n";
+static const char __pyx_k__4[] = "";
+static const char __pyx_k__5[] = "\345\276\227";
 static const char __pyx_k_br[] = "<br>";
-static const char __pyx_k_by[] = "by";
 static const char __pyx_k_np[] = "np";
 static const char __pyx_k_os[] = "os";
 static const char __pyx_k_pd[] = "pd";
 static const char __pyx_k_re[] = "re";
 static const char __pyx_k_PIL[] = "PIL";
+static const char __pyx_k_chn[] = "chn";
 static const char __pyx_k_csv[] = "csv";
-static const char __pyx_k_end[] = "end";
 static const char __pyx_k_map[] = "map";
+static const char __pyx_k_pin[] = "pin";
 static const char __pyx_k_sub[] = "sub";
 static const char __pyx_k_sys[] = "sys";
 static const char __pyx_k_zip[] = "zip";
+static const char __pyx_k_0_4f[] = "0.4f";
 static const char __pyx_k_Pool[] = "Pool";
 static const char __pyx_k_argv[] = "argv";
-static const char __pyx_k_file[] = "file";
 static const char __pyx_k_font[] = "font";
 static const char __pyx_k_glob[] = "glob";
 static const char __pyx_k_join[] = "join";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_math[] = "math";
-static const char __pyx_k_nbsp[] = "&nbsp";
 static const char __pyx_k_path[] = "path";
 static const char __pyx_k_pink[] = "pink";
 static const char __pyx_k_span[] = "</span>";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_time[] = "time";
+static const char __pyx_k_apply[] = "apply";
 static const char __pyx_k_array[] = "array";
 static const char __pyx_k_close[] = "close";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_print[] = "print";
-static const char __pyx_k_range[] = "range";
 static const char __pyx_k_round[] = "round";
-static const char __pyx_k_split[] = "split";
-static const char __pyx_k_strip[] = "strip";
-static const char __pyx_k_filter[] = "filter";
 static const char __pyx_k_footer[] = "footer";
 static const char __pyx_k_header[] = "header";
 static const char __pyx_k_import[] = "__import__";
@@ -1321,8 +1275,11 @@ static const char __pyx_k_abspath[] = "abspath";
 static const char __pyx_k_dirname[] = "dirname";
 static const char __pyx_k_getsize[] = "getsize";
 static const char __pyx_k_groupby[] = "groupby";
+static const char __pyx_k_logging[] = "logging";
+static const char __pyx_k_seconds[] = " seconds";
 static const char __pyx_k_153_0_17[] = "153, 0, 17";
 static const char __pyx_k_dir_path[] = "dir_path";
+static const char __pyx_k_ispinyin[] = "ispinyin";
 static const char __pyx_k_operator[] = "operator";
 static const char __pyx_k_pypinyin[] = "pypinyin";
 static const char __pyx_k_truetype[] = "truetype";
@@ -1330,2270 +1287,279 @@ static const char __pyx_k_DataFrame[] = "DataFrame";
 static const char __pyx_k_ImageFont[] = "ImageFont";
 static const char __pyx_k_get_style[] = "get_style";
 static const char __pyx_k_itertools[] = "itertools";
+static const char __pyx_k_seconds_2[] = " seconds\n--------------------------------------------------\n";
 static const char __pyx_k_ThreadPool[] = "ThreadPool";
 static const char __pyx_k_exceptions[] = "exceptions";
 static const char __pyx_k_get_script[] = "get_script";
 static const char __pyx_k_itemgetter[] = "itemgetter";
-static const char __pyx_k_pinyin_text[] = "pinyin_text";
-static const char __pyx_k_pinyin_word[] = "pinyin_word";
-static const char __pyx_k_sort_values[] = "sort_values";
+static const char __pyx_k_apply_pinyin[] = "apply_pinyin";
 static const char __pyx_k_chinese_font[] = "chinese_font";
-static const char __pyx_k_chinese_text[] = "chinese_text";
 static const char __pyx_k_perf_counter[] = "perf_counter";
-static const char __pyx_k_sort_key_true[] = "sort_key_true";
+static const char __pyx_k_group_phrases[] = "group_phrases";
 static const char __pyx_k_base_font_size[] = "base_font_size";
-static const char __pyx_k_filter_newline[] = "filter_newline";
-static const char __pyx_k_process_phrase[] = "process_phrase";
-static const char __pyx_k_sort_key_false[] = "sort_key_false";
 static const char __pyx_k_english_scaling[] = "english_scaling";
 static const char __pyx_k_is_chinese_char[] = "is_chinese_char";
-static const char __pyx_k_strip_extra_col[] = "strip_extra_col";
 static const char __pyx_k_html_definitions[] = "html_definitions";
-static const char __pyx_k_pinyin_preceding[] = "pinyin_preceding";
 static const char __pyx_k_load_phrases_dict[] = "load_phrases_dict";
+static const char __pyx_k_parsed_phrases_in[] = "\n--------------------------------------------------\nparsed phrases in ";
 static const char __pyx_k_pinyin_exceptions[] = "pinyin_exceptions";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
+static const char __pyx_k_grouped_phrases_in[] = "grouped phrases in ";
+static const char __pyx_k_stretched_phrases_in[] = "stretched phrases in ";
 static const char __pyx_k_multiprocessing_dummy[] = "multiprocessing.dummy";
+static const char __pyx_k_fonts_UbuntuMono_R_ttf[] = "/fonts/UbuntuMono-R.ttf";
 static const char __pyx_k_span_class_pinyin_span[] = "<span class=\"pinyin\"><span>";
-static const char __pyx_k_chinese_preceding_width[] = "chinese_preceding_width";
-static const char __pyx_k_fonts_Times_New_Roman_ttf[] = "/fonts/Times_New_Roman.ttf";
+static const char __pyx_k_stretch_width_english_text[] = "stretch_width_english_text";
 static const char __pyx_k_fonts_NotoSansCJK_Regular_ttc[] = "/fonts/NotoSansCJK-Regular.ttc";
-static PyObject *__pyx_kp_s_utf_;
-static PyObject *__pyx_kp_s_utf_153_0_17;
+static PyObject *__pyx_kp_u_;
+static PyObject *__pyx_kp_u_0_4f;
+static PyObject *__pyx_kp_u_153_0_17;
 static PyObject *__pyx_n_s_DataFrame;
 static PyObject *__pyx_n_s_ImageFont;
 static PyObject *__pyx_n_s_PIL;
 static PyObject *__pyx_n_s_Pool;
 static PyObject *__pyx_n_s_ThreadPool;
-static PyObject *__pyx_kp_s_utf__2;
-static PyObject *__pyx_kp_s_utf__3;
-static PyObject *__pyx_kp_s_utf__4;
+static PyObject *__pyx_kp_u__2;
+static PyObject *__pyx_kp_u__4;
+static PyObject *__pyx_n_u__5;
 static PyObject *__pyx_n_s_abspath;
+static PyObject *__pyx_n_s_apply;
+static PyObject *__pyx_n_s_apply_pinyin;
 static PyObject *__pyx_n_s_argv;
 static PyObject *__pyx_n_s_array;
 static PyObject *__pyx_n_s_base_font_size;
-static PyObject *__pyx_kp_s_utf_br;
-static PyObject *__pyx_n_s_by;
+static PyObject *__pyx_kp_u_br;
 static PyObject *__pyx_n_s_chinese_font;
-static PyObject *__pyx_n_s_chinese_preceding_width;
-static PyObject *__pyx_n_s_chinese_text;
+static PyObject *__pyx_n_s_chn;
+static PyObject *__pyx_n_u_chn;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_close;
 static PyObject *__pyx_n_s_csv;
 static PyObject *__pyx_n_s_dir_path;
 static PyObject *__pyx_n_s_dirname;
-static PyObject *__pyx_n_s_end;
 static PyObject *__pyx_n_s_english_scaling;
 static PyObject *__pyx_n_s_exceptions;
-static PyObject *__pyx_n_s_file;
-static PyObject *__pyx_n_s_filter;
-static PyObject *__pyx_n_s_filter_newline;
 static PyObject *__pyx_n_s_font;
-static PyObject *__pyx_kp_s_utf_fonts_NotoSansCJK_Regular_ttc;
-static PyObject *__pyx_kp_s_utf_fonts_Times_New_Roman_ttf;
+static PyObject *__pyx_kp_u_fonts_NotoSansCJK_Regular_ttc;
+static PyObject *__pyx_kp_u_fonts_UbuntuMono_R_ttf;
 static PyObject *__pyx_n_s_footer;
 static PyObject *__pyx_n_s_get_script;
 static PyObject *__pyx_n_s_get_style;
 static PyObject *__pyx_n_s_getsize;
 static PyObject *__pyx_n_s_glob;
+static PyObject *__pyx_n_s_group_phrases;
 static PyObject *__pyx_n_s_groupby;
+static PyObject *__pyx_kp_u_grouped_phrases_in;
 static PyObject *__pyx_n_s_header;
 static PyObject *__pyx_n_s_html_definitions;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_is_chinese_char;
+static PyObject *__pyx_n_s_ispinyin;
+static PyObject *__pyx_n_u_ispinyin;
 static PyObject *__pyx_n_s_itemgetter;
 static PyObject *__pyx_n_s_itertools;
 static PyObject *__pyx_n_s_join;
 static PyObject *__pyx_n_s_load_phrases_dict;
+static PyObject *__pyx_n_s_logging;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_map;
 static PyObject *__pyx_n_s_math;
 static PyObject *__pyx_n_s_multiprocessing_dummy;
-static PyObject *__pyx_kp_s_utf_nbsp;
 static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_n_s_operator;
 static PyObject *__pyx_n_s_os;
 static PyObject *__pyx_n_s_pandas;
+static PyObject *__pyx_kp_u_parsed_phrases_in;
 static PyObject *__pyx_n_s_path;
 static PyObject *__pyx_n_s_pd;
 static PyObject *__pyx_n_s_perf_counter;
+static PyObject *__pyx_n_s_pin;
+static PyObject *__pyx_n_u_pin;
 static PyObject *__pyx_n_s_pink;
 static PyObject *__pyx_n_s_pinyin;
 static PyObject *__pyx_n_s_pinyin_exceptions;
-static PyObject *__pyx_n_s_pinyin_preceding;
-static PyObject *__pyx_n_s_pinyin_text;
-static PyObject *__pyx_n_s_pinyin_word;
 static PyObject *__pyx_n_s_print;
-static PyObject *__pyx_n_s_process_phrase;
 static PyObject *__pyx_n_s_pypinyin;
-static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_re;
 static PyObject *__pyx_n_s_round;
-static PyObject *__pyx_n_s_sort_key_false;
-static PyObject *__pyx_n_s_sort_key_true;
-static PyObject *__pyx_n_s_sort_values;
-static PyObject *__pyx_kp_s_utf_span;
-static PyObject *__pyx_kp_s_utf_span_class_pinyin_span;
-static PyObject *__pyx_n_s_split;
-static PyObject *__pyx_n_s_strip;
-static PyObject *__pyx_n_s_strip_extra_col;
+static PyObject *__pyx_kp_u_seconds;
+static PyObject *__pyx_kp_u_seconds_2;
+static PyObject *__pyx_kp_u_span;
+static PyObject *__pyx_kp_u_span_class_pinyin_span;
+static PyObject *__pyx_n_s_stretch_width_english_text;
+static PyObject *__pyx_kp_u_stretched_phrases_in;
 static PyObject *__pyx_n_s_sub;
 static PyObject *__pyx_n_s_sys;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_time;
 static PyObject *__pyx_n_s_truetype;
 static PyObject *__pyx_n_s_zip;
-static PyObject *__pyx_pf_10add_pinyin_calculate_width_chinese(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_2calculate_num_spaces(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_4stretch_char_space_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_6stretch_char_space(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_8stretch_width_english_text_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_10process_phrase_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_12stretch_width_english_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_14unzip(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_16process_phrase(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_18is_chinese_char(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_char); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_20sort_key_true(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_s); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_22sort_key_false(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_s); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_24filter_newline(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_line); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_26split_mega(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_mega); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_28parse_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text_list); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_30add_span(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_32strip_tuple(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_34strip_extra_col(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_36process_mini_phrase(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_38group_and_format(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_mega); /* proto */
-static PyObject *__pyx_pf_10add_pinyin_40add_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
-static __Pyx_CachedCFunction __pyx_umethod_PyString_Type_split = {0, &__pyx_n_s_split, 0, 0, 0};
+static PyObject *__pyx_pf_10add_pinyin_stretch_width_english_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_word); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_2is_chinese_char(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_char); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_4filter_newline(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_line); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_6split_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_8add_span(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_10group_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_12group_and_format(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_14apply_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_chn); /* proto */
+static PyObject *__pyx_pf_10add_pinyin_16add_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
 static PyObject *__pyx_float_0_4;
 static PyObject *__pyx_int_2;
-static PyObject *__pyx_int_3;
 static PyObject *__pyx_int_12;
 static PyObject *__pyx_int_100;
 static PyObject *__pyx_int_210;
-static PyObject *__pyx_slice__6;
-static PyObject *__pyx_slice__7;
-static PyObject *__pyx_tuple__5;
-static PyObject *__pyx_tuple__8;
-static PyObject *__pyx_tuple__9;
+static PyObject *__pyx_tuple__3;
+static PyObject *__pyx_tuple__6;
+static PyObject *__pyx_tuple__7;
 /* Late includes */
 
-/* "add_pinyin.pyx":33
- * cdef int space_width = font.getsize(" ")[0]
- * 
- * cpdef int calculate_width_chinese(str text):             # <<<<<<<<<<<<<<
- * 	#return len(text)*60
- * 	return chinese_font.getsize(text)[0]
- */
-
-static PyObject *__pyx_pw_10add_pinyin_1calculate_width_chinese(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-static int __pyx_f_10add_pinyin_calculate_width_chinese(PyObject *__pyx_v_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  int __pyx_r;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  __Pyx_RefNannySetupContext("calculate_width_chinese", 0);
-
-  /* "add_pinyin.pyx":35
- * cpdef int calculate_width_chinese(str text):
- * 	#return len(text)*60
- * 	return chinese_font.getsize(text)[0]             # <<<<<<<<<<<<<<
- * 
- * cpdef int calculate_num_spaces(str text):
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_chinese_font); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getsize); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_text); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_text};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_text};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
-      __Pyx_INCREF(__pyx_v_text);
-      __Pyx_GIVEREF(__pyx_v_text);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_text);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 35, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_r = __pyx_t_5;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":33
- * cdef int space_width = font.getsize(" ")[0]
- * 
- * cpdef int calculate_width_chinese(str text):             # <<<<<<<<<<<<<<
- * 	#return len(text)*60
- * 	return chinese_font.getsize(text)[0]
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_WriteUnraisable("add_pinyin.calculate_width_chinese", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_1calculate_width_chinese(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_1calculate_width_chinese(PyObject *__pyx_self, PyObject *__pyx_v_text) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("calculate_width_chinese (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text), (&PyString_Type), 1, "text", 1))) __PYX_ERR(0, 33, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_calculate_width_chinese(__pyx_self, ((PyObject*)__pyx_v_text));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_calculate_width_chinese(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("calculate_width_chinese", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_f_10add_pinyin_calculate_width_chinese(__pyx_v_text, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.calculate_width_chinese", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":37
- * 	return chinese_font.getsize(text)[0]
- * 
- * cpdef int calculate_num_spaces(str text):             # <<<<<<<<<<<<<<
- * 	cdef str text_no_space = list(filter(str.strip, list(text)))
- * 	cdef int num_spaces = len(list(text)) - len(text_no_space)
- */
-
-static PyObject *__pyx_pw_10add_pinyin_3calculate_num_spaces(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-static int __pyx_f_10add_pinyin_calculate_num_spaces(PyObject *__pyx_v_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_text_no_space = 0;
-  int __pyx_v_num_spaces;
-  int __pyx_r;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  Py_ssize_t __pyx_t_4;
-  Py_ssize_t __pyx_t_5;
-  __Pyx_RefNannySetupContext("calculate_num_spaces", 0);
-
-  /* "add_pinyin.pyx":38
- * 
- * cpdef int calculate_num_spaces(str text):
- * 	cdef str text_no_space = list(filter(str.strip, list(text)))             # <<<<<<<<<<<<<<
- * 	cdef int num_spaces = len(list(text)) - len(text_no_space)
- * 	return num_spaces
- */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)(&PyString_Type)), __pyx_n_s_strip); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PySequence_List(__pyx_v_text); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
-  __pyx_t_1 = 0;
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_filter, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PySequence_List(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_3))||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 38, __pyx_L1_error)
-  __pyx_v_text_no_space = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
-
-  /* "add_pinyin.pyx":39
- * cpdef int calculate_num_spaces(str text):
- * 	cdef str text_no_space = list(filter(str.strip, list(text)))
- * 	cdef int num_spaces = len(list(text)) - len(text_no_space)             # <<<<<<<<<<<<<<
- * 	return num_spaces
- * 
- */
-  __pyx_t_3 = PySequence_List(__pyx_v_text); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyList_GET_SIZE(__pyx_t_3); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(0, 39, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_5 = PyObject_Length(__pyx_v_text_no_space); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_v_num_spaces = (__pyx_t_4 - __pyx_t_5);
-
-  /* "add_pinyin.pyx":40
- * 	cdef str text_no_space = list(filter(str.strip, list(text)))
- * 	cdef int num_spaces = len(list(text)) - len(text_no_space)
- * 	return num_spaces             # <<<<<<<<<<<<<<
- * 
- * cpdef str stretch_char_space_old(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):
- */
-  __pyx_r = __pyx_v_num_spaces;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":37
- * 	return chinese_font.getsize(text)[0]
- * 
- * cpdef int calculate_num_spaces(str text):             # <<<<<<<<<<<<<<
- * 	cdef str text_no_space = list(filter(str.strip, list(text)))
- * 	cdef int num_spaces = len(list(text)) - len(text_no_space)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_WriteUnraisable("add_pinyin.calculate_num_spaces", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_text_no_space);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_3calculate_num_spaces(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_3calculate_num_spaces(PyObject *__pyx_self, PyObject *__pyx_v_text) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("calculate_num_spaces (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text), (&PyString_Type), 1, "text", 1))) __PYX_ERR(0, 37, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_2calculate_num_spaces(__pyx_self, ((PyObject*)__pyx_v_text));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_2calculate_num_spaces(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("calculate_num_spaces", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_f_10add_pinyin_calculate_num_spaces(__pyx_v_text, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.calculate_num_spaces", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
 /* "add_pinyin.pyx":42
- * 	return num_spaces
+ * cdef int char_width = font.getsize(" ")[0]
  * 
- * cpdef str stretch_char_space_old(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):             # <<<<<<<<<<<<<<
- * 	#print('preceeding: ', " ".join(pinyin_preceding), pinyin_word, chinese_preceding_width)
- * 	#print(self.space_width)
+ * cpdef str stretch_width_english_text(str pinyin_word):             # <<<<<<<<<<<<<<
+ * 	cdef int pinyin_word_width = char_width*len(pinyin_word)
+ * 	while pinyin_word_width <= chinese_width:
  */
 
-static PyObject *__pyx_pw_10add_pinyin_5stretch_char_space_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_char_space_old(PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  int __pyx_v_current_pinyin_width;
+static PyObject *__pyx_pw_10add_pinyin_1stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_v_pinyin_word); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text(PyObject *__pyx_v_pinyin_word, CYTHON_UNUSED int __pyx_skip_dispatch) {
   int __pyx_v_pinyin_word_width;
-  int __pyx_v_difference;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
+  Py_ssize_t __pyx_t_1;
+  int __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  int __pyx_t_7;
-  __Pyx_RefNannySetupContext("stretch_char_space_old", 0);
+  __Pyx_RefNannySetupContext("stretch_width_english_text", 0);
   __Pyx_INCREF(__pyx_v_pinyin_word);
 
-  /* "add_pinyin.pyx":45
- * 	#print('preceeding: ', " ".join(pinyin_preceding), pinyin_word, chinese_preceding_width)
- * 	#print(self.space_width)
- * 	cdef int current_pinyin_width = font.getsize(pinyin_preceding)[0]             # <<<<<<<<<<<<<<
- * 	cdef int pinyin_word_width = font.getsize(pinyin_word)[0]
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getsize); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_pinyin_preceding); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_pinyin_preceding};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_pinyin_preceding};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
-      __Pyx_INCREF(__pyx_v_pinyin_preceding);
-      __Pyx_GIVEREF(__pyx_v_pinyin_preceding);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_pinyin_preceding);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_current_pinyin_width = __pyx_t_5;
-
-  /* "add_pinyin.pyx":46
- * 	#print(self.space_width)
- * 	cdef int current_pinyin_width = font.getsize(pinyin_preceding)[0]
- * 	cdef int pinyin_word_width = font.getsize(pinyin_word)[0]             # <<<<<<<<<<<<<<
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- * 	#i = 0
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_getsize); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_1)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_1);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (!__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_pinyin_word};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_pinyin_word};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    {
-      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 46, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1); __pyx_t_1 = NULL;
-      __Pyx_INCREF(__pyx_v_pinyin_word);
-      __Pyx_GIVEREF(__pyx_v_pinyin_word);
-      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_pinyin_word);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_v_pinyin_word_width = __pyx_t_5;
-
-  /* "add_pinyin.pyx":49
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- * 	#i = 0
- * 	cdef int difference = chinese_preceding_width - current_pinyin_width             # <<<<<<<<<<<<<<
- * 	pinyin_word = " " * round(difference / space_width) + " " + pinyin_word
- * 	#while current_pinyin_width <= chinese_preceding_width:
- */
-  __pyx_v_difference = (__pyx_v_chinese_preceding_width - __pyx_v_current_pinyin_width);
-
-  /* "add_pinyin.pyx":50
- * 	#i = 0
- * 	cdef int difference = chinese_preceding_width - current_pinyin_width
- * 	pinyin_word = " " * round(difference / space_width) + " " + pinyin_word             # <<<<<<<<<<<<<<
- * 	#while current_pinyin_width <= chinese_preceding_width:
- * 	#	pinyin_word = " " + pinyin_word
- */
-  if (unlikely(__pyx_v_10add_pinyin_space_width == 0)) {
-    PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
-    __PYX_ERR(0, 50, __pyx_L1_error)
-  }
-  else if (sizeof(int) == sizeof(long) && (!(((int)-1) > 0)) && unlikely(__pyx_v_10add_pinyin_space_width == (int)-1)  && unlikely(UNARY_NEG_WOULD_OVERFLOW(__pyx_v_difference))) {
-    PyErr_SetString(PyExc_OverflowError, "value too large to perform division");
-    __PYX_ERR(0, 50, __pyx_L1_error)
-  }
-  __pyx_t_4 = __Pyx_PyInt_From_int(__Pyx_div_int(__pyx_v_difference, __pyx_v_10add_pinyin_space_width)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_round, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyNumber_Multiply(__pyx_kp_s_utf_, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyNumber_Add(__pyx_t_4, __pyx_kp_s_utf_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyNumber_Add(__pyx_t_3, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 50, __pyx_L1_error)
-  __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-  __pyx_t_4 = 0;
-
-  /* "add_pinyin.pyx":56
- * 	#	i += 1
+  /* "add_pinyin.pyx":43
  * 
- * 	if pinyin_word_width >= 208:             # <<<<<<<<<<<<<<
- * 		#print('<= 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = pinyin_word[1:]
- */
-  __pyx_t_6 = ((__pyx_v_pinyin_word_width >= 0xD0) != 0);
-  if (__pyx_t_6) {
-
-    /* "add_pinyin.pyx":58
- * 	if pinyin_word_width >= 208:
- * 		#print('<= 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = pinyin_word[1:]             # <<<<<<<<<<<<<<
- * 	elif pinyin_word_width < 123:
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- */
-    if (unlikely(__pyx_v_pinyin_word == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 58, __pyx_L1_error)
-    }
-    __pyx_t_4 = PySequence_GetSlice(__pyx_v_pinyin_word, 1, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 58, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "add_pinyin.pyx":56
- * 	#	i += 1
- * 
- * 	if pinyin_word_width >= 208:             # <<<<<<<<<<<<<<
- * 		#print('<= 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = pinyin_word[1:]
- */
-    goto __pyx_L3;
-  }
-
-  /* "add_pinyin.pyx":59
- * 		#print('<= 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = pinyin_word[1:]
- * 	elif pinyin_word_width < 123:             # <<<<<<<<<<<<<<
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "  " + pinyin_word
- */
-  __pyx_t_6 = ((__pyx_v_pinyin_word_width < 0x7B) != 0);
-  if (__pyx_t_6) {
-
-    /* "add_pinyin.pyx":61
- * 	elif pinyin_word_width < 123:
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "  " + pinyin_word             # <<<<<<<<<<<<<<
- * 	elif pinyin_word_width >= 123 and pinyin_word_width < 158:
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
- */
-    __pyx_t_4 = PyNumber_Add(__pyx_kp_s_utf__2, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 61, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "add_pinyin.pyx":59
- * 		#print('<= 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = pinyin_word[1:]
- * 	elif pinyin_word_width < 123:             # <<<<<<<<<<<<<<
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "  " + pinyin_word
- */
-    goto __pyx_L3;
-  }
-
-  /* "add_pinyin.pyx":62
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "  " + pinyin_word
- * 	elif pinyin_word_width >= 123 and pinyin_word_width < 158:             # <<<<<<<<<<<<<<
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
+ * cpdef str stretch_width_english_text(str pinyin_word):
+ * 	cdef int pinyin_word_width = char_width*len(pinyin_word)             # <<<<<<<<<<<<<<
+ * 	while pinyin_word_width <= chinese_width:
  * 		pinyin_word = " " + pinyin_word
  */
-  __pyx_t_7 = ((__pyx_v_pinyin_word_width >= 0x7B) != 0);
-  if (__pyx_t_7) {
-  } else {
-    __pyx_t_6 = __pyx_t_7;
-    goto __pyx_L4_bool_binop_done;
+  if (unlikely(__pyx_v_pinyin_word == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(0, 43, __pyx_L1_error)
   }
-  __pyx_t_7 = ((__pyx_v_pinyin_word_width < 0x9E) != 0);
-  __pyx_t_6 = __pyx_t_7;
-  __pyx_L4_bool_binop_done:;
-  if (__pyx_t_6) {
+  __pyx_t_1 = __Pyx_PyUnicode_GET_LENGTH(__pyx_v_pinyin_word); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_v_pinyin_word_width = (__pyx_v_10add_pinyin_char_width * __pyx_t_1);
 
-    /* "add_pinyin.pyx":64
- * 	elif pinyin_word_width >= 123 and pinyin_word_width < 158:
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = " " + pinyin_word             # <<<<<<<<<<<<<<
- * 	elif pinyin_word_width >= 158 and pinyin_word_width < 208:
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- */
-    __pyx_t_4 = PyNumber_Add(__pyx_kp_s_utf_, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 64, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "add_pinyin.pyx":62
- * 		#print('< 123: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "  " + pinyin_word
- * 	elif pinyin_word_width >= 123 and pinyin_word_width < 158:             # <<<<<<<<<<<<<<
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
+  /* "add_pinyin.pyx":44
+ * cpdef str stretch_width_english_text(str pinyin_word):
+ * 	cdef int pinyin_word_width = char_width*len(pinyin_word)
+ * 	while pinyin_word_width <= chinese_width:             # <<<<<<<<<<<<<<
  * 		pinyin_word = " " + pinyin_word
- */
-    goto __pyx_L3;
-  }
-
-  /* "add_pinyin.pyx":65
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = " " + pinyin_word
- * 	elif pinyin_word_width >= 158 and pinyin_word_width < 208:             # <<<<<<<<<<<<<<
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "" + pinyin_word
- */
-  __pyx_t_7 = ((__pyx_v_pinyin_word_width >= 0x9E) != 0);
-  if (__pyx_t_7) {
-  } else {
-    __pyx_t_6 = __pyx_t_7;
-    goto __pyx_L6_bool_binop_done;
-  }
-  __pyx_t_7 = ((__pyx_v_pinyin_word_width < 0xD0) != 0);
-  __pyx_t_6 = __pyx_t_7;
-  __pyx_L6_bool_binop_done:;
-  if (__pyx_t_6) {
-
-    /* "add_pinyin.pyx":67
- * 	elif pinyin_word_width >= 158 and pinyin_word_width < 208:
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "" + pinyin_word             # <<<<<<<<<<<<<<
- * 	return pinyin_preceding + pinyin_word
- * 
- */
-    __pyx_t_4 = PyNumber_Add(__pyx_kp_s_utf__3, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 67, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "add_pinyin.pyx":65
- * 		#print('123 <= x < 158: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = " " + pinyin_word
- * 	elif pinyin_word_width >= 158 and pinyin_word_width < 208:             # <<<<<<<<<<<<<<
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "" + pinyin_word
- */
-  }
-  __pyx_L3:;
-
-  /* "add_pinyin.pyx":68
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "" + pinyin_word
- * 	return pinyin_preceding + pinyin_word             # <<<<<<<<<<<<<<
- * 
- * cpdef str stretch_char_space(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = PyNumber_Add(__pyx_v_pinyin_preceding, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 68, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_r = ((PyObject*)__pyx_t_4);
-  __pyx_t_4 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":42
- * 	return num_spaces
- * 
- * cpdef str stretch_char_space_old(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):             # <<<<<<<<<<<<<<
- * 	#print('preceeding: ', " ".join(pinyin_preceding), pinyin_word, chinese_preceding_width)
- * 	#print(self.space_width)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_pinyin_word);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_5stretch_char_space_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_5stretch_char_space_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pinyin_preceding = 0;
-  PyObject *__pyx_v_pinyin_word = 0;
-  int __pyx_v_chinese_preceding_width;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("stretch_char_space_old (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pinyin_preceding,&__pyx_n_s_pinyin_word,&__pyx_n_s_chinese_preceding_width,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_preceding)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_word)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_char_space_old", 1, 3, 3, 1); __PYX_ERR(0, 42, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_chinese_preceding_width)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_char_space_old", 1, 3, 3, 2); __PYX_ERR(0, 42, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "stretch_char_space_old") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v_pinyin_preceding = ((PyObject*)values[0]);
-    __pyx_v_pinyin_word = ((PyObject*)values[1]);
-    __pyx_v_chinese_preceding_width = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_chinese_preceding_width == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L3_error)
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("stretch_char_space_old", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_preceding), (&PyString_Type), 1, "pinyin_preceding", 1))) __PYX_ERR(0, 42, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_word), (&PyString_Type), 1, "pinyin_word", 1))) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_4stretch_char_space_old(__pyx_self, __pyx_v_pinyin_preceding, __pyx_v_pinyin_word, __pyx_v_chinese_preceding_width);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_4stretch_char_space_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("stretch_char_space_old", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_char_space_old(__pyx_v_pinyin_preceding, __pyx_v_pinyin_word, __pyx_v_chinese_preceding_width, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":70
- * 	return pinyin_preceding + pinyin_word
- * 
- * cpdef str stretch_char_space(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):             # <<<<<<<<<<<<<<
- * 	#print('preceeding: ', " ".join(pinyin_preceding), pinyin_word, chinese_preceding_width)
- * 	#print(self.space_width)
- */
-
-static PyObject *__pyx_pw_10add_pinyin_7stretch_char_space(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_char_space(PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  CYTHON_UNUSED int __pyx_v_current_pinyin_width;
-  int __pyx_v_pinyin_word_width;
-  CYTHON_UNUSED int __pyx_v_difference;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  __Pyx_RefNannySetupContext("stretch_char_space", 0);
-  __Pyx_INCREF(__pyx_v_pinyin_word);
-
-  /* "add_pinyin.pyx":74
- * 	#print(self.space_width)
- * 	#print("Chinese preceding width",chinese_preceding_width)
- * 	cdef int current_pinyin_width = font.getsize(pinyin_preceding)[0]             # <<<<<<<<<<<<<<
- * 	cdef int pinyin_word_width = font.getsize(pinyin_word)[0]
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getsize); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 74, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_pinyin_preceding); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_pinyin_preceding};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_pinyin_preceding};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 74, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
-      __Pyx_INCREF(__pyx_v_pinyin_preceding);
-      __Pyx_GIVEREF(__pyx_v_pinyin_preceding);
-      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_pinyin_preceding);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 74, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 74, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_current_pinyin_width = __pyx_t_5;
-
-  /* "add_pinyin.pyx":75
- * 	#print("Chinese preceding width",chinese_preceding_width)
- * 	cdef int current_pinyin_width = font.getsize(pinyin_preceding)[0]
- * 	cdef int pinyin_word_width = font.getsize(pinyin_word)[0]             # <<<<<<<<<<<<<<
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- * 	#i = 0
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_getsize); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_1)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_1);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (!__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_pinyin_word};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_pinyin_word};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_3);
-    } else
-    #endif
-    {
-      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1); __pyx_t_1 = NULL;
-      __Pyx_INCREF(__pyx_v_pinyin_word);
-      __Pyx_GIVEREF(__pyx_v_pinyin_word);
-      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_pinyin_word);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 75, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_v_pinyin_word_width = __pyx_t_5;
-
-  /* "add_pinyin.pyx":78
- * 	#print("init widths: ", current_pinyin_width, chinese_preceding_width)
- * 	#i = 0
- * 	cdef int difference = chinese_preceding_width - pinyin_word_width             # <<<<<<<<<<<<<<
- * 	#print(difference)
- * 	#pinyin_word = " " * math.floor((difference / space_width)/2.0) + pinyin_word + " " * math.floor((difference / space_width)/2.0)
- */
-  __pyx_v_difference = (__pyx_v_chinese_preceding_width - __pyx_v_pinyin_word_width);
-
-  /* "add_pinyin.pyx":81
- * 	#print(difference)
- * 	#pinyin_word = " " * math.floor((difference / space_width)/2.0) + pinyin_word + " " * math.floor((difference / space_width)/2.0)
- * 	while pinyin_word_width <= chinese_preceding_width:             # <<<<<<<<<<<<<<
- * 		pinyin_word = " " + pinyin_word
- * 		pinyin_word_width += space_width
+ * 		pinyin_word_width += char_width
  */
   while (1) {
-    __pyx_t_6 = ((__pyx_v_pinyin_word_width <= __pyx_v_chinese_preceding_width) != 0);
-    if (!__pyx_t_6) break;
+    __pyx_t_2 = ((__pyx_v_pinyin_word_width <= __pyx_v_10add_pinyin_chinese_width) != 0);
+    if (!__pyx_t_2) break;
 
-    /* "add_pinyin.pyx":82
- * 	#pinyin_word = " " * math.floor((difference / space_width)/2.0) + pinyin_word + " " * math.floor((difference / space_width)/2.0)
- * 	while pinyin_word_width <= chinese_preceding_width:
+    /* "add_pinyin.pyx":45
+ * 	cdef int pinyin_word_width = char_width*len(pinyin_word)
+ * 	while pinyin_word_width <= chinese_width:
  * 		pinyin_word = " " + pinyin_word             # <<<<<<<<<<<<<<
- * 		pinyin_word_width += space_width
- * 		if pinyin_word_width <= chinese_preceding_width:
+ * 		pinyin_word_width += char_width
+ * 		if pinyin_word_width <= chinese_width:
  */
-    __pyx_t_4 = PyNumber_Add(__pyx_kp_s_utf_, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 82, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
+    __pyx_t_3 = __Pyx_PyUnicode_ConcatSafe(__pyx_kp_u_, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_3));
+    __pyx_t_3 = 0;
 
-    /* "add_pinyin.pyx":83
- * 	while pinyin_word_width <= chinese_preceding_width:
+    /* "add_pinyin.pyx":46
+ * 	while pinyin_word_width <= chinese_width:
  * 		pinyin_word = " " + pinyin_word
- * 		pinyin_word_width += space_width             # <<<<<<<<<<<<<<
- * 		if pinyin_word_width <= chinese_preceding_width:
+ * 		pinyin_word_width += char_width             # <<<<<<<<<<<<<<
+ * 		if pinyin_word_width <= chinese_width:
  * 			pinyin_word = pinyin_word + " "
  */
-    __pyx_v_pinyin_word_width = (__pyx_v_pinyin_word_width + __pyx_v_10add_pinyin_space_width);
+    __pyx_v_pinyin_word_width = (__pyx_v_pinyin_word_width + __pyx_v_10add_pinyin_char_width);
 
-    /* "add_pinyin.pyx":84
+    /* "add_pinyin.pyx":47
  * 		pinyin_word = " " + pinyin_word
- * 		pinyin_word_width += space_width
- * 		if pinyin_word_width <= chinese_preceding_width:             # <<<<<<<<<<<<<<
+ * 		pinyin_word_width += char_width
+ * 		if pinyin_word_width <= chinese_width:             # <<<<<<<<<<<<<<
  * 			pinyin_word = pinyin_word + " "
- * 			pinyin_word_width += space_width
+ * 			pinyin_word_width += char_width
  */
-    __pyx_t_6 = ((__pyx_v_pinyin_word_width <= __pyx_v_chinese_preceding_width) != 0);
-    if (__pyx_t_6) {
-
-      /* "add_pinyin.pyx":85
- * 		pinyin_word_width += space_width
- * 		if pinyin_word_width <= chinese_preceding_width:
- * 			pinyin_word = pinyin_word + " "             # <<<<<<<<<<<<<<
- * 			pinyin_word_width += space_width
- * 
- */
-      __pyx_t_4 = PyNumber_Add(__pyx_v_pinyin_word, __pyx_kp_s_utf_); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 85, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_4));
-      __pyx_t_4 = 0;
-
-      /* "add_pinyin.pyx":86
- * 		if pinyin_word_width <= chinese_preceding_width:
- * 			pinyin_word = pinyin_word + " "
- * 			pinyin_word_width += space_width             # <<<<<<<<<<<<<<
- * 
- * 		#i += 1
- */
-      __pyx_v_pinyin_word_width = (__pyx_v_pinyin_word_width + __pyx_v_10add_pinyin_space_width);
-
-      /* "add_pinyin.pyx":84
- * 		pinyin_word = " " + pinyin_word
- * 		pinyin_word_width += space_width
- * 		if pinyin_word_width <= chinese_preceding_width:             # <<<<<<<<<<<<<<
- * 			pinyin_word = pinyin_word + " "
- * 			pinyin_word_width += space_width
- */
-    }
-  }
-
-  /* "add_pinyin.pyx":102
- * 		#print('158 <= x < 208: ',pinyin_word, pinyin_word_width)
- * 		pinyin_word = "" + pinyin_word'''
- * 	return pinyin_preceding + pinyin_word             # <<<<<<<<<<<<<<
- * 
- * cpdef str stretch_width_english_text_old(str pinyin_text, str chinese_text):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = PyNumber_Add(__pyx_v_pinyin_preceding, __pyx_v_pinyin_word); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 102, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_r = ((PyObject*)__pyx_t_4);
-  __pyx_t_4 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":70
- * 	return pinyin_preceding + pinyin_word
- * 
- * cpdef str stretch_char_space(str pinyin_preceding, str pinyin_word, int chinese_preceding_width):             # <<<<<<<<<<<<<<
- * 	#print('preceeding: ', " ".join(pinyin_preceding), pinyin_word, chinese_preceding_width)
- * 	#print(self.space_width)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_pinyin_word);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_7stretch_char_space(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_7stretch_char_space(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pinyin_preceding = 0;
-  PyObject *__pyx_v_pinyin_word = 0;
-  int __pyx_v_chinese_preceding_width;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("stretch_char_space (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pinyin_preceding,&__pyx_n_s_pinyin_word,&__pyx_n_s_chinese_preceding_width,0};
-    PyObject* values[3] = {0,0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-        CYTHON_FALLTHROUGH;
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_preceding)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_word)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_char_space", 1, 3, 3, 1); __PYX_ERR(0, 70, __pyx_L3_error)
-        }
-        CYTHON_FALLTHROUGH;
-        case  2:
-        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_chinese_preceding_width)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_char_space", 1, 3, 3, 2); __PYX_ERR(0, 70, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "stretch_char_space") < 0)) __PYX_ERR(0, 70, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
-    }
-    __pyx_v_pinyin_preceding = ((PyObject*)values[0]);
-    __pyx_v_pinyin_word = ((PyObject*)values[1]);
-    __pyx_v_chinese_preceding_width = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_chinese_preceding_width == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 70, __pyx_L3_error)
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("stretch_char_space", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 70, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_preceding), (&PyString_Type), 1, "pinyin_preceding", 1))) __PYX_ERR(0, 70, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_word), (&PyString_Type), 1, "pinyin_word", 1))) __PYX_ERR(0, 70, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_6stretch_char_space(__pyx_self, __pyx_v_pinyin_preceding, __pyx_v_pinyin_word, __pyx_v_chinese_preceding_width);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_6stretch_char_space(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_preceding, PyObject *__pyx_v_pinyin_word, int __pyx_v_chinese_preceding_width) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("stretch_char_space", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_char_space(__pyx_v_pinyin_preceding, __pyx_v_pinyin_word, __pyx_v_chinese_preceding_width, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.stretch_char_space", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":104
- * 	return pinyin_preceding + pinyin_word
- * 
- * cpdef str stretch_width_english_text_old(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""
- */
-
-static PyObject *__pyx_pw_10add_pinyin_9stretch_width_english_text_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text_old(PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_splityin = 0;
-  PyObject *__pyx_v_stretched_pinyin = 0;
-  int __pyx_v_i;
-  int __pyx_v_chinese_preceding_width;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  Py_ssize_t __pyx_t_2;
-  Py_ssize_t __pyx_t_3;
-  int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("stretch_width_english_text_old", 0);
-
-  /* "add_pinyin.pyx":105
- * 
- * cpdef str stretch_width_english_text_old(str pinyin_text, str chinese_text):
- * 	cdef list splityin = pinyin_text.split(" ")             # <<<<<<<<<<<<<<
- * 	cdef str stretched_pinyin = ""
- * 	cdef int i
- */
-  __pyx_t_1 = __Pyx_CallUnboundCMethod1(&__pyx_umethod_PyString_Type_split, __pyx_v_pinyin_text, __pyx_kp_s_utf_); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 105, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 105, __pyx_L1_error)
-  __pyx_v_splityin = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":106
- * cpdef str stretch_width_english_text_old(str pinyin_text, str chinese_text):
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""             # <<<<<<<<<<<<<<
- * 	cdef int i
- * 	for i in range(len(chinese_text)):
- */
-  __Pyx_INCREF(__pyx_kp_s_utf__3);
-  __pyx_v_stretched_pinyin = __pyx_kp_s_utf__3;
-
-  /* "add_pinyin.pyx":108
- * 	cdef str stretched_pinyin = ""
- * 	cdef int i
- * 	for i in range(len(chinese_text)):             # <<<<<<<<<<<<<<
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:i])
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- */
-  __pyx_t_2 = PyObject_Length(__pyx_v_chinese_text); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 108, __pyx_L1_error)
-  __pyx_t_3 = __pyx_t_2;
-  for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
-    __pyx_v_i = __pyx_t_4;
-
-    /* "add_pinyin.pyx":109
- * 	cdef int i
- * 	for i in range(len(chinese_text)):
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:i])             # <<<<<<<<<<<<<<
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)
- */
-    if (unlikely(__pyx_v_chinese_text == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 109, __pyx_L1_error)
-    }
-    __pyx_t_1 = PySequence_GetSlice(__pyx_v_chinese_text, 0, __pyx_v_i); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_v_chinese_preceding_width = __pyx_f_10add_pinyin_calculate_width_chinese(((PyObject*)__pyx_t_1), 0);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "add_pinyin.pyx":111
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:i])
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)             # <<<<<<<<<<<<<<
- * 	return stretched_pinyin
- * 
- */
-    if (unlikely(__pyx_v_splityin == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 111, __pyx_L1_error)
-    }
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_splityin, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 111, __pyx_L1_error)
-    __pyx_t_5 = __pyx_f_10add_pinyin_stretch_char_space(__pyx_v_stretched_pinyin, ((PyObject*)__pyx_t_1), __pyx_v_chinese_preceding_width, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 111, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_DECREF_SET(__pyx_v_stretched_pinyin, ((PyObject*)__pyx_t_5));
-    __pyx_t_5 = 0;
-  }
-
-  /* "add_pinyin.pyx":112
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)
- * 	return stretched_pinyin             # <<<<<<<<<<<<<<
- * 
- * cpdef str process_phrase_old(str pinyin_text, str chinese_text):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_stretched_pinyin);
-  __pyx_r = __pyx_v_stretched_pinyin;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":104
- * 	return pinyin_preceding + pinyin_word
- * 
- * cpdef str stretch_width_english_text_old(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_splityin);
-  __Pyx_XDECREF(__pyx_v_stretched_pinyin);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_9stretch_width_english_text_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_9stretch_width_english_text_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pinyin_text = 0;
-  PyObject *__pyx_v_chinese_text = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("stretch_width_english_text_old (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pinyin_text,&__pyx_n_s_chinese_text,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_text)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_chinese_text)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_width_english_text_old", 1, 2, 2, 1); __PYX_ERR(0, 104, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "stretch_width_english_text_old") < 0)) __PYX_ERR(0, 104, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-    }
-    __pyx_v_pinyin_text = ((PyObject*)values[0]);
-    __pyx_v_chinese_text = ((PyObject*)values[1]);
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("stretch_width_english_text_old", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 104, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_text), (&PyString_Type), 1, "pinyin_text", 1))) __PYX_ERR(0, 104, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_chinese_text), (&PyString_Type), 1, "chinese_text", 1))) __PYX_ERR(0, 104, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_8stretch_width_english_text_old(__pyx_self, __pyx_v_pinyin_text, __pyx_v_chinese_text);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_8stretch_width_english_text_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("stretch_width_english_text_old", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_width_english_text_old(__pyx_v_pinyin_text, __pyx_v_chinese_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 104, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":114
- * 	return stretched_pinyin
- * 
- * cpdef str process_phrase_old(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(pinyin_text, chinese_text)
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)
- */
-
-static PyObject *__pyx_pw_10add_pinyin_11process_phrase_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_phrase_old(PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_stretched_pinyin_text = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_phrase = 0;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("process_phrase_old", 0);
-
-  /* "add_pinyin.pyx":115
- * 
- * cpdef str process_phrase_old(str pinyin_text, str chinese_text):
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(pinyin_text, chinese_text)             # <<<<<<<<<<<<<<
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)
- * 
- */
-  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_width_english_text(__pyx_v_pinyin_text, __pyx_v_chinese_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_stretched_pinyin_text = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":116
- * cpdef str process_phrase_old(str pinyin_text, str chinese_text):
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(pinyin_text, chinese_text)
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)             # <<<<<<<<<<<<<<
- * 
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_re); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 116, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_sub); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 116, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  __pyx_t_4 = 0;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_2, __pyx_kp_s_utf_, __pyx_kp_s_utf_nbsp, __pyx_v_stretched_pinyin_text};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 3+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_2, __pyx_kp_s_utf_, __pyx_kp_s_utf_nbsp, __pyx_v_stretched_pinyin_text};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 3+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-  } else
-  #endif
-  {
-    __pyx_t_5 = PyTuple_New(3+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 116, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_2 = ((__pyx_v_pinyin_word_width <= __pyx_v_10add_pinyin_chinese_width) != 0);
     if (__pyx_t_2) {
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2); __pyx_t_2 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_utf_);
-    __Pyx_GIVEREF(__pyx_kp_s_utf_);
-    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_kp_s_utf_);
-    __Pyx_INCREF(__pyx_kp_s_utf_nbsp);
-    __Pyx_GIVEREF(__pyx_kp_s_utf_nbsp);
-    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_kp_s_utf_nbsp);
-    __Pyx_INCREF(__pyx_v_stretched_pinyin_text);
-    __Pyx_GIVEREF(__pyx_v_stretched_pinyin_text);
-    PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_4, __pyx_v_stretched_pinyin_text);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 116, __pyx_L1_error)
-  __Pyx_DECREF_SET(__pyx_v_stretched_pinyin_text, ((PyObject*)__pyx_t_1));
-  __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":119
- * 
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- * 		+ stretched_pinyin_text  + "</span>" + chinese_text + "</span>"             # <<<<<<<<<<<<<<
- * 	return stretched_pinyin_text, chinese_text
+      /* "add_pinyin.pyx":48
+ * 		pinyin_word_width += char_width
+ * 		if pinyin_word_width <= chinese_width:
+ * 			pinyin_word = pinyin_word + " "             # <<<<<<<<<<<<<<
+ * 			pinyin_word_width += char_width
+ * 	return pinyin_word
+ */
+      __pyx_t_3 = __Pyx_PyUnicode_Concat(__pyx_v_pinyin_word, __pyx_kp_u_); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 48, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF_SET(__pyx_v_pinyin_word, ((PyObject*)__pyx_t_3));
+      __pyx_t_3 = 0;
+
+      /* "add_pinyin.pyx":49
+ * 		if pinyin_word_width <= chinese_width:
+ * 			pinyin_word = pinyin_word + " "
+ * 			pinyin_word_width += char_width             # <<<<<<<<<<<<<<
+ * 	return pinyin_word
  * 
  */
-  __pyx_t_1 = PyNumber_Add(__pyx_kp_s_utf_span_class_pinyin_span, __pyx_v_stretched_pinyin_text); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyNumber_Add(__pyx_t_1, __pyx_kp_s_utf_span); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyNumber_Add(__pyx_t_3, __pyx_v_chinese_text); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyNumber_Add(__pyx_t_1, __pyx_kp_s_utf_span); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_phrase = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
+      __pyx_v_pinyin_word_width = (__pyx_v_pinyin_word_width + __pyx_v_10add_pinyin_char_width);
 
-  /* "add_pinyin.pyx":120
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- * 		+ stretched_pinyin_text  + "</span>" + chinese_text + "</span>"
- * 	return stretched_pinyin_text, chinese_text             # <<<<<<<<<<<<<<
- * 
- * cpdef str stretch_width_english_text(str pinyin_text, str chinese_text):
+      /* "add_pinyin.pyx":47
+ * 		pinyin_word = " " + pinyin_word
+ * 		pinyin_word_width += char_width
+ * 		if pinyin_word_width <= chinese_width:             # <<<<<<<<<<<<<<
+ * 			pinyin_word = pinyin_word + " "
+ * 			pinyin_word_width += char_width
  */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_INCREF(__pyx_v_stretched_pinyin_text);
-  __Pyx_GIVEREF(__pyx_v_stretched_pinyin_text);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_stretched_pinyin_text);
-  __Pyx_INCREF(__pyx_v_chinese_text);
-  __Pyx_GIVEREF(__pyx_v_chinese_text);
-  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_chinese_text);
-  if (!(likely(PyString_CheckExact(__pyx_t_3))||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 120, __pyx_L1_error)
-  __pyx_r = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":114
- * 	return stretched_pinyin
- * 
- * cpdef str process_phrase_old(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(pinyin_text, chinese_text)
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("add_pinyin.process_phrase_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_stretched_pinyin_text);
-  __Pyx_XDECREF(__pyx_v_phrase);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_11process_phrase_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_11process_phrase_old(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pinyin_text = 0;
-  PyObject *__pyx_v_chinese_text = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("process_phrase_old (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pinyin_text,&__pyx_n_s_chinese_text,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_text)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_chinese_text)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("process_phrase_old", 1, 2, 2, 1); __PYX_ERR(0, 114, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "process_phrase_old") < 0)) __PYX_ERR(0, 114, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-    }
-    __pyx_v_pinyin_text = ((PyObject*)values[0]);
-    __pyx_v_chinese_text = ((PyObject*)values[1]);
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("process_phrase_old", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 114, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("add_pinyin.process_phrase_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_text), (&PyString_Type), 1, "pinyin_text", 1))) __PYX_ERR(0, 114, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_chinese_text), (&PyString_Type), 1, "chinese_text", 1))) __PYX_ERR(0, 114, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_10process_phrase_old(__pyx_self, __pyx_v_pinyin_text, __pyx_v_chinese_text);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_10process_phrase_old(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("process_phrase_old", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_process_phrase_old(__pyx_v_pinyin_text, __pyx_v_chinese_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.process_phrase_old", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":122
- * 	return stretched_pinyin_text, chinese_text
- * 
- * cpdef str stretch_width_english_text(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""
- */
-
-static PyObject *__pyx_pw_10add_pinyin_13stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_stretch_width_english_text(PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_splityin = 0;
-  PyObject *__pyx_v_stretched_pinyin = 0;
-  int __pyx_v_i;
-  int __pyx_v_chinese_preceding_width;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  Py_ssize_t __pyx_t_2;
-  Py_ssize_t __pyx_t_3;
-  int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("stretch_width_english_text", 0);
-
-  /* "add_pinyin.pyx":123
- * 
- * cpdef str stretch_width_english_text(str pinyin_text, str chinese_text):
- * 	cdef list splityin = pinyin_text.split(" ")             # <<<<<<<<<<<<<<
- * 	cdef str stretched_pinyin = ""
- * 	cdef int i
- */
-  __pyx_t_1 = __Pyx_CallUnboundCMethod1(&__pyx_umethod_PyString_Type_split, __pyx_v_pinyin_text, __pyx_kp_s_utf_); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 123, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 123, __pyx_L1_error)
-  __pyx_v_splityin = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":124
- * cpdef str stretch_width_english_text(str pinyin_text, str chinese_text):
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""             # <<<<<<<<<<<<<<
- * 	cdef int i
- * 	#print('len chinese to parse:',len(chinese_text), chinese_text)
- */
-  __Pyx_INCREF(__pyx_kp_s_utf__3);
-  __pyx_v_stretched_pinyin = __pyx_kp_s_utf__3;
-
-  /* "add_pinyin.pyx":127
- * 	cdef int i
- * 	#print('len chinese to parse:',len(chinese_text), chinese_text)
- * 	for i in range(len(chinese_text)):             # <<<<<<<<<<<<<<
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:])
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- */
-  __pyx_t_2 = PyObject_Length(__pyx_v_chinese_text); if (unlikely(__pyx_t_2 == ((Py_ssize_t)-1))) __PYX_ERR(0, 127, __pyx_L1_error)
-  __pyx_t_3 = __pyx_t_2;
-  for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
-    __pyx_v_i = __pyx_t_4;
-
-    /* "add_pinyin.pyx":128
- * 	#print('len chinese to parse:',len(chinese_text), chinese_text)
- * 	for i in range(len(chinese_text)):
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:])             # <<<<<<<<<<<<<<
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)
- */
-    if (unlikely(__pyx_v_chinese_text == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 128, __pyx_L1_error)
-    }
-    __pyx_t_1 = PySequence_GetSlice(__pyx_v_chinese_text, 0, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_v_chinese_preceding_width = __pyx_f_10add_pinyin_calculate_width_chinese(((PyObject*)__pyx_t_1), 0);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "add_pinyin.pyx":130
- * 		chinese_preceding_width = calculate_width_chinese(chinese_text[:])
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)             # <<<<<<<<<<<<<<
- * 	return stretched_pinyin
- * 
- */
-    if (unlikely(__pyx_v_splityin == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 130, __pyx_L1_error)
-    }
-    __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_splityin, __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 1, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 130, __pyx_L1_error)
-    __pyx_t_5 = __pyx_f_10add_pinyin_stretch_char_space(__pyx_v_stretched_pinyin, ((PyObject*)__pyx_t_1), __pyx_v_chinese_preceding_width, 0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 130, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_DECREF_SET(__pyx_v_stretched_pinyin, ((PyObject*)__pyx_t_5));
-    __pyx_t_5 = 0;
-  }
-
-  /* "add_pinyin.pyx":131
- * 		#print('preceeding: ', " ".join(splityin[:i]), splityin[i], i)
- * 		stretched_pinyin = stretch_char_space(stretched_pinyin, splityin[i], chinese_preceding_width)
- * 	return stretched_pinyin             # <<<<<<<<<<<<<<
- * 
- * cpdef list unzip(list phrases):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_stretched_pinyin);
-  __pyx_r = __pyx_v_stretched_pinyin;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":122
- * 	return stretched_pinyin_text, chinese_text
- * 
- * cpdef str stretch_width_english_text(str pinyin_text, str chinese_text):             # <<<<<<<<<<<<<<
- * 	cdef list splityin = pinyin_text.split(" ")
- * 	cdef str stretched_pinyin = ""
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_splityin);
-  __Pyx_XDECREF(__pyx_v_stretched_pinyin);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_13stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_13stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_pinyin_text = 0;
-  PyObject *__pyx_v_chinese_text = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("stretch_width_english_text (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_pinyin_text,&__pyx_n_s_chinese_text,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_pinyin_text)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_chinese_text)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("stretch_width_english_text", 1, 2, 2, 1); __PYX_ERR(0, 122, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "stretch_width_english_text") < 0)) __PYX_ERR(0, 122, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-    }
-    __pyx_v_pinyin_text = ((PyObject*)values[0]);
-    __pyx_v_chinese_text = ((PyObject*)values[1]);
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("stretch_width_english_text", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 122, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_text), (&PyString_Type), 1, "pinyin_text", 1))) __PYX_ERR(0, 122, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_chinese_text), (&PyString_Type), 1, "chinese_text", 1))) __PYX_ERR(0, 122, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_12stretch_width_english_text(__pyx_self, __pyx_v_pinyin_text, __pyx_v_chinese_text);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_12stretch_width_english_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_text, PyObject *__pyx_v_chinese_text) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("stretch_width_english_text", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_width_english_text(__pyx_v_pinyin_text, __pyx_v_chinese_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":133
- * 	return stretched_pinyin
- * 
- * cpdef list unzip(list phrases):             # <<<<<<<<<<<<<<
- * 	# using list comprehension to
- * 	# perform Unzipping
- */
-
-static PyObject *__pyx_pw_10add_pinyin_15unzip(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_unzip(PyObject *__pyx_v_phrases, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_res = 0;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("unzip", 0);
-
-  /* "add_pinyin.pyx":137
- * 	# perform Unzipping
- * 	#print('phrases: ',phrases, len(phrases))
- * 	cdef list res = list(zip(*phrases))             # <<<<<<<<<<<<<<
- * 	#print(res)
- * 	return res
- */
-  __pyx_t_1 = PySequence_Tuple(__pyx_v_phrases); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 137, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 137, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PySequence_List(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 137, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v_res = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":139
- * 	cdef list res = list(zip(*phrases))
- * 	#print(res)
- * 	return res             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple process_phrase(tuple phrases):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_res);
-  __pyx_r = __pyx_v_res;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":133
- * 	return stretched_pinyin
- * 
- * cpdef list unzip(list phrases):             # <<<<<<<<<<<<<<
- * 	# using list comprehension to
- * 	# perform Unzipping
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("add_pinyin.unzip", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_res);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_15unzip(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_15unzip(PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("unzip (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrases), (&PyList_Type), 1, "phrases", 1))) __PYX_ERR(0, 133, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_14unzip(__pyx_self, ((PyObject*)__pyx_v_phrases));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_14unzip(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("unzip", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_unzip(__pyx_v_phrases, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 133, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.unzip", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":141
- * 	return res
- * 
- * cpdef tuple process_phrase(tuple phrases):             # <<<<<<<<<<<<<<
- * 	# phrases: pinyin, chinese, ind
- * 	#print(phrases, phrases[0],phrases[1][0])
- */
-
-static PyObject *__pyx_pw_10add_pinyin_17process_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_phrase(PyObject *__pyx_v_phrases, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_stretched_pinyin_text = 0;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  int __pyx_t_4;
-  PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("process_phrase", 0);
-
-  /* "add_pinyin.pyx":144
- * 	# phrases: pinyin, chinese, ind
- * 	#print(phrases, phrases[0],phrases[1][0])
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(phrases[1][0],phrases[0])             # <<<<<<<<<<<<<<
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)
- * 
- */
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 144, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_phrases, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(0, 144, __pyx_L1_error)
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 144, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_phrases, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 144, __pyx_L1_error)
-  __pyx_t_3 = __pyx_f_10add_pinyin_stretch_width_english_text(((PyObject*)__pyx_t_2), ((PyObject*)__pyx_t_1), 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 144, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_stretched_pinyin_text = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
-
-  /* "add_pinyin.pyx":145
- * 	#print(phrases, phrases[0],phrases[1][0])
- * 	cdef str stretched_pinyin_text = stretch_width_english_text(phrases[1][0],phrases[0])
- * 	stretched_pinyin_text = re.sub(' ', '&nbsp', stretched_pinyin_text)             # <<<<<<<<<<<<<<
- * 
- * 	#print('phrase: ', phrase)
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_re); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sub); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = NULL;
-  __pyx_t_4 = 0;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_2);
-    if (likely(__pyx_t_1)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-      __Pyx_INCREF(__pyx_t_1);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
-      __pyx_t_4 = 1;
     }
   }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_1, __pyx_kp_s_utf_, __pyx_kp_s_utf_nbsp, __pyx_v_stretched_pinyin_text};
-    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 3+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_GOTREF(__pyx_t_3);
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_1, __pyx_kp_s_utf_, __pyx_kp_s_utf_nbsp, __pyx_v_stretched_pinyin_text};
-    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 3+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_GOTREF(__pyx_t_3);
-  } else
-  #endif
-  {
-    __pyx_t_5 = PyTuple_New(3+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 145, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    if (__pyx_t_1) {
-      __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __pyx_t_1 = NULL;
-    }
-    __Pyx_INCREF(__pyx_kp_s_utf_);
-    __Pyx_GIVEREF(__pyx_kp_s_utf_);
-    PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_4, __pyx_kp_s_utf_);
-    __Pyx_INCREF(__pyx_kp_s_utf_nbsp);
-    __Pyx_GIVEREF(__pyx_kp_s_utf_nbsp);
-    PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_kp_s_utf_nbsp);
-    __Pyx_INCREF(__pyx_v_stretched_pinyin_text);
-    __Pyx_GIVEREF(__pyx_v_stretched_pinyin_text);
-    PyTuple_SET_ITEM(__pyx_t_5, 2+__pyx_t_4, __pyx_v_stretched_pinyin_text);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 145, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 145, __pyx_L1_error)
-  __Pyx_DECREF_SET(__pyx_v_stretched_pinyin_text, ((PyObject*)__pyx_t_3));
-  __pyx_t_3 = 0;
 
-  /* "add_pinyin.pyx":149
- * 	#print('phrase: ', phrase)
- * 	#print('zip list: ', list(zip([phrase],[phrases[2]])))
- * 	return (phrases[0], stretched_pinyin_text, phrases[2], phrases[3])             # <<<<<<<<<<<<<<
+  /* "add_pinyin.pyx":50
+ * 			pinyin_word = pinyin_word + " "
+ * 			pinyin_word_width += char_width
+ * 	return pinyin_word             # <<<<<<<<<<<<<<
  * 
  * cpdef bool is_chinese_char(str char):
  */
   __Pyx_XDECREF(__pyx_r);
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 149, __pyx_L1_error)
-  }
-  __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_phrases, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 149, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 149, __pyx_L1_error)
-  }
-  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_phrases, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 149, __pyx_L1_error)
-  }
-  __pyx_t_5 = __Pyx_GetItemInt_Tuple(__pyx_v_phrases, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 149, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = PyTuple_New(4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
-  __Pyx_INCREF(__pyx_v_stretched_pinyin_text);
-  __Pyx_GIVEREF(__pyx_v_stretched_pinyin_text);
-  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_v_stretched_pinyin_text);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_5);
-  PyTuple_SET_ITEM(__pyx_t_1, 3, __pyx_t_5);
-  __pyx_t_3 = 0;
-  __pyx_t_2 = 0;
-  __pyx_t_5 = 0;
-  __pyx_r = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_pinyin_word);
+  __pyx_r = __pyx_v_pinyin_word;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":141
- * 	return res
+  /* "add_pinyin.pyx":42
+ * cdef int char_width = font.getsize(" ")[0]
  * 
- * cpdef tuple process_phrase(tuple phrases):             # <<<<<<<<<<<<<<
- * 	# phrases: pinyin, chinese, ind
- * 	#print(phrases, phrases[0],phrases[1][0])
+ * cpdef str stretch_width_english_text(str pinyin_word):             # <<<<<<<<<<<<<<
+ * 	cdef int pinyin_word_width = char_width*len(pinyin_word)
+ * 	while pinyin_word_width <= chinese_width:
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("add_pinyin.process_phrase", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_stretched_pinyin_text);
+  __Pyx_XDECREF(__pyx_v_pinyin_word);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_17process_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_17process_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
+static PyObject *__pyx_pw_10add_pinyin_1stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_v_pinyin_word); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_1stretch_width_english_text(PyObject *__pyx_self, PyObject *__pyx_v_pinyin_word) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("process_phrase (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrases), (&PyTuple_Type), 1, "phrases", 1))) __PYX_ERR(0, 141, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_16process_phrase(__pyx_self, ((PyObject*)__pyx_v_phrases));
+  __Pyx_RefNannySetupContext("stretch_width_english_text (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pinyin_word), (&PyUnicode_Type), 1, "pinyin_word", 1))) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_stretch_width_english_text(__pyx_self, ((PyObject*)__pyx_v_pinyin_word));
 
   /* function exit code */
   goto __pyx_L0;
@@ -3604,13 +1570,13 @@ static PyObject *__pyx_pw_10add_pinyin_17process_phrase(PyObject *__pyx_self, Py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_16process_phrase(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
+static PyObject *__pyx_pf_10add_pinyin_stretch_width_english_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_pinyin_word) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("process_phrase", 0);
+  __Pyx_RefNannySetupContext("stretch_width_english_text", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_process_phrase(__pyx_v_phrases, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_stretch_width_english_text(__pyx_v_pinyin_word, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3619,7 +1585,7 @@ static PyObject *__pyx_pf_10add_pinyin_16process_phrase(CYTHON_UNUSED PyObject *
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.process_phrase", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.stretch_width_english_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -3627,15 +1593,15 @@ static PyObject *__pyx_pf_10add_pinyin_16process_phrase(CYTHON_UNUSED PyObject *
   return __pyx_r;
 }
 
-/* "add_pinyin.pyx":151
- * 	return (phrases[0], stretched_pinyin_text, phrases[2], phrases[3])
+/* "add_pinyin.pyx":52
+ * 	return pinyin_word
  * 
  * cpdef bool is_chinese_char(str char):             # <<<<<<<<<<<<<<
  * 	return 0x4e00 <= ord(char) <= 0x9fff
  * 
  */
 
-static PyObject *__pyx_pw_10add_pinyin_19is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_3is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char); /*proto*/
 static PyBoolObject *__pyx_f_10add_pinyin_is_chinese_char(PyObject *__pyx_v_char, CYTHON_UNUSED int __pyx_skip_dispatch) {
   PyBoolObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -3644,28 +1610,28 @@ static PyBoolObject *__pyx_f_10add_pinyin_is_chinese_char(PyObject *__pyx_v_char
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("is_chinese_char", 0);
 
-  /* "add_pinyin.pyx":152
+  /* "add_pinyin.pyx":53
  * 
  * cpdef bool is_chinese_char(str char):
  * 	return 0x4e00 <= ord(char) <= 0x9fff             # <<<<<<<<<<<<<<
  * 
- * cpdef bool sort_key_true(tuple s):
+ * cpdef tuple filter_newline(tuple line):
  */
   __Pyx_XDECREF(((PyObject *)__pyx_r));
-  __pyx_t_1 = __Pyx_PyObject_Ord(__pyx_v_char); if (unlikely(__pyx_t_1 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 152, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Ord(__pyx_v_char); if (unlikely(__pyx_t_1 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 53, __pyx_L1_error)
   __pyx_t_2 = (0x4e00 <= __pyx_t_1);
   if (__pyx_t_2) {
     __pyx_t_2 = (__pyx_t_1 <= 0x9fff);
   }
-  __pyx_t_3 = __Pyx_PyBool_FromLong(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 152, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyBool_FromLong(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (!(likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_7cpython_4bool_bool)))) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (!(likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_7cpython_4bool_bool)))) __PYX_ERR(0, 53, __pyx_L1_error)
   __pyx_r = ((PyBoolObject *)__pyx_t_3);
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":151
- * 	return (phrases[0], stretched_pinyin_text, phrases[2], phrases[3])
+  /* "add_pinyin.pyx":52
+ * 	return pinyin_word
  * 
  * cpdef bool is_chinese_char(str char):             # <<<<<<<<<<<<<<
  * 	return 0x4e00 <= ord(char) <= 0x9fff
@@ -3684,13 +1650,13 @@ static PyBoolObject *__pyx_f_10add_pinyin_is_chinese_char(PyObject *__pyx_v_char
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_19is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_19is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char) {
+static PyObject *__pyx_pw_10add_pinyin_3is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_3is_chinese_char(PyObject *__pyx_self, PyObject *__pyx_v_char) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("is_chinese_char (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_char), (&PyString_Type), 1, "char", 1))) __PYX_ERR(0, 151, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_18is_chinese_char(__pyx_self, ((PyObject*)__pyx_v_char));
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_char), (&PyUnicode_Type), 1, "char", 1))) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_2is_chinese_char(__pyx_self, ((PyObject*)__pyx_v_char));
 
   /* function exit code */
   goto __pyx_L0;
@@ -3701,13 +1667,13 @@ static PyObject *__pyx_pw_10add_pinyin_19is_chinese_char(PyObject *__pyx_self, P
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_18is_chinese_char(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_char) {
+static PyObject *__pyx_pf_10add_pinyin_2is_chinese_char(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_char) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("is_chinese_char", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_10add_pinyin_is_chinese_char(__pyx_v_char, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__pyx_f_10add_pinyin_is_chinese_char(__pyx_v_char, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -3724,211 +1690,15 @@ static PyObject *__pyx_pf_10add_pinyin_18is_chinese_char(CYTHON_UNUSED PyObject 
   return __pyx_r;
 }
 
-/* "add_pinyin.pyx":154
+/* "add_pinyin.pyx":55
  * 	return 0x4e00 <= ord(char) <= 0x9fff
- * 
- * cpdef bool sort_key_true(tuple s):             # <<<<<<<<<<<<<<
- * 	#print(s, s[3])
- * 	return s[3] == True
- */
-
-static PyObject *__pyx_pw_10add_pinyin_21sort_key_true(PyObject *__pyx_self, PyObject *__pyx_v_s); /*proto*/
-static PyBoolObject *__pyx_f_10add_pinyin_sort_key_true(PyObject *__pyx_v_s, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyBoolObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("sort_key_true", 0);
-
-  /* "add_pinyin.pyx":156
- * cpdef bool sort_key_true(tuple s):
- * 	#print(s, s[3])
- * 	return s[3] == True             # <<<<<<<<<<<<<<
- * 
- * cpdef bool sort_key_false(tuple s):
- */
-  __Pyx_XDECREF(((PyObject *)__pyx_r));
-  if (unlikely(__pyx_v_s == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 156, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_s, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 156, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, Py_True, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 156, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_7cpython_4bool_bool))))) __PYX_ERR(0, 156, __pyx_L1_error)
-  __pyx_r = ((PyBoolObject *)__pyx_t_2);
-  __pyx_t_2 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":154
- * 	return 0x4e00 <= ord(char) <= 0x9fff
- * 
- * cpdef bool sort_key_true(tuple s):             # <<<<<<<<<<<<<<
- * 	#print(s, s[3])
- * 	return s[3] == True
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("add_pinyin.sort_key_true", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF((PyObject *)__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_21sort_key_true(PyObject *__pyx_self, PyObject *__pyx_v_s); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_21sort_key_true(PyObject *__pyx_self, PyObject *__pyx_v_s) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("sort_key_true (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_s), (&PyTuple_Type), 1, "s", 1))) __PYX_ERR(0, 154, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_20sort_key_true(__pyx_self, ((PyObject*)__pyx_v_s));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_20sort_key_true(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("sort_key_true", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_10add_pinyin_sort_key_true(__pyx_v_s, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 154, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.sort_key_true", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":158
- * 	return s[3] == True
- * 
- * cpdef bool sort_key_false(tuple s):             # <<<<<<<<<<<<<<
- * 	return s[3] == False
- * 
- */
-
-static PyObject *__pyx_pw_10add_pinyin_23sort_key_false(PyObject *__pyx_self, PyObject *__pyx_v_s); /*proto*/
-static PyBoolObject *__pyx_f_10add_pinyin_sort_key_false(PyObject *__pyx_v_s, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyBoolObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("sort_key_false", 0);
-
-  /* "add_pinyin.pyx":159
- * 
- * cpdef bool sort_key_false(tuple s):
- * 	return s[3] == False             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple filter_newline(tuple line):
- */
-  __Pyx_XDECREF(((PyObject *)__pyx_r));
-  if (unlikely(__pyx_v_s == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 159, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_s, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 159, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, Py_False, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 159, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_7cpython_4bool_bool))))) __PYX_ERR(0, 159, __pyx_L1_error)
-  __pyx_r = ((PyBoolObject *)__pyx_t_2);
-  __pyx_t_2 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":158
- * 	return s[3] == True
- * 
- * cpdef bool sort_key_false(tuple s):             # <<<<<<<<<<<<<<
- * 	return s[3] == False
- * 
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("add_pinyin.sort_key_false", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF((PyObject *)__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_23sort_key_false(PyObject *__pyx_self, PyObject *__pyx_v_s); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_23sort_key_false(PyObject *__pyx_self, PyObject *__pyx_v_s) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("sort_key_false (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_s), (&PyTuple_Type), 1, "s", 1))) __PYX_ERR(0, 158, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_22sort_key_false(__pyx_self, ((PyObject*)__pyx_v_s));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_22sort_key_false(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("sort_key_false", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_10add_pinyin_sort_key_false(__pyx_v_s, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 158, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.sort_key_false", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":161
- * 	return s[3] == False
  * 
  * cpdef tuple filter_newline(tuple line):             # <<<<<<<<<<<<<<
  * 	#print(line[0], type(line[0]))
  * 	line = (re.sub('\n', '<br>', line[0]), line[1], line[2], line[3])
  */
 
-static PyObject *__pyx_pw_10add_pinyin_25filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_5filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYTHON_UNUSED int __pyx_skip_dispatch) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -3941,23 +1711,23 @@ static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYT
   __Pyx_RefNannySetupContext("filter_newline", 0);
   __Pyx_INCREF(__pyx_v_line);
 
-  /* "add_pinyin.pyx":163
+  /* "add_pinyin.pyx":57
  * cpdef tuple filter_newline(tuple line):
  * 	#print(line[0], type(line[0]))
  * 	line = (re.sub('\n', '<br>', line[0]), line[1], line[2], line[3])             # <<<<<<<<<<<<<<
  * 	return line
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_re); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_re); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_sub); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_sub); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (unlikely(__pyx_v_line == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 163, __pyx_L1_error)
+    __PYX_ERR(0, 57, __pyx_L1_error)
   }
-  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -3973,8 +1743,8 @@ static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYT
   }
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_kp_s_utf__4, __pyx_kp_s_utf_br, __pyx_t_2};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
+    PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_kp_u__2, __pyx_kp_u_br, __pyx_t_2};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -3982,52 +1752,52 @@ static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYT
   #endif
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_kp_s_utf__4, __pyx_kp_s_utf_br, __pyx_t_2};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
+    PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_kp_u__2, __pyx_kp_u_br, __pyx_t_2};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else
   #endif
   {
-    __pyx_t_6 = PyTuple_New(3+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 163, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(3+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     if (__pyx_t_4) {
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
     }
-    __Pyx_INCREF(__pyx_kp_s_utf__4);
-    __Pyx_GIVEREF(__pyx_kp_s_utf__4);
-    PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_kp_s_utf__4);
-    __Pyx_INCREF(__pyx_kp_s_utf_br);
-    __Pyx_GIVEREF(__pyx_kp_s_utf_br);
-    PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_kp_s_utf_br);
+    __Pyx_INCREF(__pyx_kp_u__2);
+    __Pyx_GIVEREF(__pyx_kp_u__2);
+    PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_kp_u__2);
+    __Pyx_INCREF(__pyx_kp_u_br);
+    __Pyx_GIVEREF(__pyx_kp_u_br);
+    PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_kp_u_br);
     __Pyx_GIVEREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_6, 2+__pyx_t_5, __pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (unlikely(__pyx_v_line == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 163, __pyx_L1_error)
+    __PYX_ERR(0, 57, __pyx_L1_error)
   }
-  __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   if (unlikely(__pyx_v_line == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 163, __pyx_L1_error)
+    __PYX_ERR(0, 57, __pyx_L1_error)
   }
-  __pyx_t_6 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   if (unlikely(__pyx_v_line == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 163, __pyx_L1_error)
+    __PYX_ERR(0, 57, __pyx_L1_error)
   }
-  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_line, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1);
@@ -4044,20 +1814,20 @@ static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYT
   __Pyx_DECREF_SET(__pyx_v_line, ((PyObject*)__pyx_t_4));
   __pyx_t_4 = 0;
 
-  /* "add_pinyin.pyx":164
+  /* "add_pinyin.pyx":58
  * 	#print(line[0], type(line[0]))
  * 	line = (re.sub('\n', '<br>', line[0]), line[1], line[2], line[3])
  * 	return line             # <<<<<<<<<<<<<<
  * 
- * cpdef list split_mega(list mega):
+ * cpdef list split_phrases(list phrase):
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_line);
   __pyx_r = __pyx_v_line;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":161
- * 	return s[3] == False
+  /* "add_pinyin.pyx":55
+ * 	return 0x4e00 <= ord(char) <= 0x9fff
  * 
  * cpdef tuple filter_newline(tuple line):             # <<<<<<<<<<<<<<
  * 	#print(line[0], type(line[0]))
@@ -4081,13 +1851,13 @@ static PyObject *__pyx_f_10add_pinyin_filter_newline(PyObject *__pyx_v_line, CYT
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_25filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_25filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line) {
+static PyObject *__pyx_pw_10add_pinyin_5filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_5filter_newline(PyObject *__pyx_self, PyObject *__pyx_v_line) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("filter_newline (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_line), (&PyTuple_Type), 1, "line", 1))) __PYX_ERR(0, 161, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_24filter_newline(__pyx_self, ((PyObject*)__pyx_v_line));
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_line), (&PyTuple_Type), 1, "line", 1))) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_4filter_newline(__pyx_self, ((PyObject*)__pyx_v_line));
 
   /* function exit code */
   goto __pyx_L0;
@@ -4098,13 +1868,13 @@ static PyObject *__pyx_pw_10add_pinyin_25filter_newline(PyObject *__pyx_self, Py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_24filter_newline(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_line) {
+static PyObject *__pyx_pf_10add_pinyin_4filter_newline(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_line) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("filter_newline", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_filter_newline(__pyx_v_line, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_filter_newline(__pyx_v_line, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4121,17 +1891,17 @@ static PyObject *__pyx_pf_10add_pinyin_24filter_newline(CYTHON_UNUSED PyObject *
   return __pyx_r;
 }
 
-/* "add_pinyin.pyx":166
+/* "add_pinyin.pyx":60
  * 	return line
  * 
- * cpdef list split_mega(list mega):             # <<<<<<<<<<<<<<
- * 	cdef list grouped_mega = []
- * 	#print(len(mega), mega[0])
+ * cpdef list split_phrases(list phrase):             # <<<<<<<<<<<<<<
+ * 	cdef list grouped_phrase = []
+ * 	for k, g in groupby(phrase, itemgetter(2)):
  */
 
-static PyObject *__pyx_pw_10add_pinyin_27split_mega(PyObject *__pyx_self, PyObject *__pyx_v_mega); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_grouped_mega = 0;
+static PyObject *__pyx_pw_10add_pinyin_7split_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_split_phrases(PyObject *__pyx_v_phrase, CYTHON_UNUSED int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_grouped_phrase = 0;
   CYTHON_UNUSED PyObject *__pyx_v_k = NULL;
   PyObject *__pyx_v_g = NULL;
   PyObject *__pyx_r = NULL;
@@ -4146,32 +1916,32 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
   PyObject *(*__pyx_t_8)(PyObject *);
   PyObject *(*__pyx_t_9)(PyObject *);
   int __pyx_t_10;
-  __Pyx_RefNannySetupContext("split_mega", 0);
+  __Pyx_RefNannySetupContext("split_phrases", 0);
 
-  /* "add_pinyin.pyx":167
+  /* "add_pinyin.pyx":61
  * 
- * cpdef list split_mega(list mega):
- * 	cdef list grouped_mega = []             # <<<<<<<<<<<<<<
- * 	#print(len(mega), mega[0])
- * 	#print(len(mega[1]))
+ * cpdef list split_phrases(list phrase):
+ * 	cdef list grouped_phrase = []             # <<<<<<<<<<<<<<
+ * 	for k, g in groupby(phrase, itemgetter(2)):
+ * 		#print("list",list(g),"key",k)
  */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 167, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_grouped_mega = ((PyObject*)__pyx_t_1);
+  __pyx_v_grouped_phrase = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":170
- * 	#print(len(mega), mega[0])
- * 	#print(len(mega[1]))
- * 	for k, g in groupby(mega, itemgetter(3)):             # <<<<<<<<<<<<<<
+  /* "add_pinyin.pyx":62
+ * cpdef list split_phrases(list phrase):
+ * 	cdef list grouped_phrase = []
+ * 	for k, g in groupby(phrase, itemgetter(2)):             # <<<<<<<<<<<<<<
  * 		#print("list",list(g),"key",k)
- * 		grouped_mega.append(list(g))
+ * 		grouped_phrase.append(list(g))
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_groupby); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_groupby); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_itemgetter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_itemgetter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -4188,8 +1958,8 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
   }
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_mega, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_phrase, __pyx_t_4};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -4197,26 +1967,26 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
   #endif
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_mega, __pyx_t_4};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_phrase, __pyx_t_4};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else
   #endif
   {
-    __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     if (__pyx_t_3) {
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3); __pyx_t_3 = NULL;
     }
-    __Pyx_INCREF(__pyx_v_mega);
-    __Pyx_GIVEREF(__pyx_v_mega);
-    PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_v_mega);
+    __Pyx_INCREF(__pyx_v_phrase);
+    __Pyx_GIVEREF(__pyx_v_phrase);
+    PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_v_phrase);
     __Pyx_GIVEREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
@@ -4225,9 +1995,9 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
     __pyx_t_2 = __pyx_t_1; __Pyx_INCREF(__pyx_t_2); __pyx_t_7 = 0;
     __pyx_t_8 = NULL;
   } else {
-    __pyx_t_7 = -1; __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_7 = -1; __pyx_t_2 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_8 = Py_TYPE(__pyx_t_2)->tp_iternext; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 170, __pyx_L1_error)
+    __pyx_t_8 = Py_TYPE(__pyx_t_2)->tp_iternext; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 62, __pyx_L1_error)
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   for (;;) {
@@ -4235,17 +2005,17 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
       if (likely(PyList_CheckExact(__pyx_t_2))) {
         if (__pyx_t_7 >= PyList_GET_SIZE(__pyx_t_2)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_1 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_7); __Pyx_INCREF(__pyx_t_1); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 170, __pyx_L1_error)
+        __pyx_t_1 = PyList_GET_ITEM(__pyx_t_2, __pyx_t_7); __Pyx_INCREF(__pyx_t_1); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 62, __pyx_L1_error)
         #else
-        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         #endif
       } else {
         if (__pyx_t_7 >= PyTuple_GET_SIZE(__pyx_t_2)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_7); __Pyx_INCREF(__pyx_t_1); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 170, __pyx_L1_error)
+        __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_2, __pyx_t_7); __Pyx_INCREF(__pyx_t_1); __pyx_t_7++; if (unlikely(0 < 0)) __PYX_ERR(0, 62, __pyx_L1_error)
         #else
-        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+        __pyx_t_1 = PySequence_ITEM(__pyx_t_2, __pyx_t_7); __pyx_t_7++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         #endif
       }
@@ -4255,7 +2025,7 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 170, __pyx_L1_error)
+          else __PYX_ERR(0, 62, __pyx_L1_error)
         }
         break;
       }
@@ -4267,7 +2037,7 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 170, __pyx_L1_error)
+        __PYX_ERR(0, 62, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -4280,15 +2050,15 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
       __Pyx_INCREF(__pyx_t_6);
       __Pyx_INCREF(__pyx_t_4);
       #else
-      __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 170, __pyx_L1_error)
+      __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_4 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 170, __pyx_L1_error)
+      __pyx_t_4 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       #endif
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
+      __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 62, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __pyx_t_9 = Py_TYPE(__pyx_t_3)->tp_iternext;
@@ -4296,7 +2066,7 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
       __Pyx_GOTREF(__pyx_t_6);
       index = 1; __pyx_t_4 = __pyx_t_9(__pyx_t_3); if (unlikely(!__pyx_t_4)) goto __pyx_L5_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_4);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_3), 2) < 0) __PYX_ERR(0, 170, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_3), 2) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
       __pyx_t_9 = NULL;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       goto __pyx_L6_unpacking_done;
@@ -4304,7 +2074,7 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __pyx_t_9 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 170, __pyx_L1_error)
+      __PYX_ERR(0, 62, __pyx_L1_error)
       __pyx_L6_unpacking_done:;
     }
     __Pyx_XDECREF_SET(__pyx_v_k, __pyx_t_6);
@@ -4312,46 +2082,46 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
     __Pyx_XDECREF_SET(__pyx_v_g, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "add_pinyin.pyx":172
- * 	for k, g in groupby(mega, itemgetter(3)):
+    /* "add_pinyin.pyx":64
+ * 	for k, g in groupby(phrase, itemgetter(2)):
  * 		#print("list",list(g),"key",k)
- * 		grouped_mega.append(list(g))             # <<<<<<<<<<<<<<
+ * 		grouped_phrase.append(list(g))             # <<<<<<<<<<<<<<
+ * 	return grouped_phrase
  * 
- * 	#print(grouped_mega[0][0], len(grouped_mega[0]))
  */
-    __pyx_t_1 = PySequence_List(__pyx_v_g); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 172, __pyx_L1_error)
+    __pyx_t_1 = PySequence_List(__pyx_v_g); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 64, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_10 = __Pyx_PyList_Append(__pyx_v_grouped_mega, __pyx_t_1); if (unlikely(__pyx_t_10 == ((int)-1))) __PYX_ERR(0, 172, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyList_Append(__pyx_v_grouped_phrase, __pyx_t_1); if (unlikely(__pyx_t_10 == ((int)-1))) __PYX_ERR(0, 64, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "add_pinyin.pyx":170
- * 	#print(len(mega), mega[0])
- * 	#print(len(mega[1]))
- * 	for k, g in groupby(mega, itemgetter(3)):             # <<<<<<<<<<<<<<
+    /* "add_pinyin.pyx":62
+ * cpdef list split_phrases(list phrase):
+ * 	cdef list grouped_phrase = []
+ * 	for k, g in groupby(phrase, itemgetter(2)):             # <<<<<<<<<<<<<<
  * 		#print("list",list(g),"key",k)
- * 		grouped_mega.append(list(g))
+ * 		grouped_phrase.append(list(g))
  */
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":175
+  /* "add_pinyin.pyx":65
+ * 		#print("list",list(g),"key",k)
+ * 		grouped_phrase.append(list(g))
+ * 	return grouped_phrase             # <<<<<<<<<<<<<<
  * 
- * 	#print(grouped_mega[0][0], len(grouped_mega[0]))
- * 	return grouped_mega             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple parse_phrases(list text_list):
+ * cpdef str add_span(list phrase):
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_grouped_mega);
-  __pyx_r = __pyx_v_grouped_mega;
+  __Pyx_INCREF(__pyx_v_grouped_phrase);
+  __pyx_r = __pyx_v_grouped_phrase;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":166
+  /* "add_pinyin.pyx":60
  * 	return line
  * 
- * cpdef list split_mega(list mega):             # <<<<<<<<<<<<<<
- * 	cdef list grouped_mega = []
- * 	#print(len(mega), mega[0])
+ * cpdef list split_phrases(list phrase):             # <<<<<<<<<<<<<<
+ * 	cdef list grouped_phrase = []
+ * 	for k, g in groupby(phrase, itemgetter(2)):
  */
 
   /* function exit code */
@@ -4361,10 +2131,10 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("add_pinyin.split_mega", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.split_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_grouped_mega);
+  __Pyx_XDECREF(__pyx_v_grouped_phrase);
   __Pyx_XDECREF(__pyx_v_k);
   __Pyx_XDECREF(__pyx_v_g);
   __Pyx_XGIVEREF(__pyx_r);
@@ -4373,13 +2143,13 @@ static PyObject *__pyx_f_10add_pinyin_split_mega(PyObject *__pyx_v_mega, CYTHON_
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_27split_mega(PyObject *__pyx_self, PyObject *__pyx_v_mega); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_27split_mega(PyObject *__pyx_self, PyObject *__pyx_v_mega) {
+static PyObject *__pyx_pw_10add_pinyin_7split_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_7split_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("split_mega (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mega), (&PyList_Type), 1, "mega", 1))) __PYX_ERR(0, 166, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_26split_mega(__pyx_self, ((PyObject*)__pyx_v_mega));
+  __Pyx_RefNannySetupContext("split_phrases (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrase), (&PyList_Type), 1, "phrase", 1))) __PYX_ERR(0, 60, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_6split_phrases(__pyx_self, ((PyObject*)__pyx_v_phrase));
 
   /* function exit code */
   goto __pyx_L0;
@@ -4390,13 +2160,13 @@ static PyObject *__pyx_pw_10add_pinyin_27split_mega(PyObject *__pyx_self, PyObje
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_26split_mega(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_mega) {
+static PyObject *__pyx_pf_10add_pinyin_6split_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("split_mega", 0);
+  __Pyx_RefNannySetupContext("split_phrases", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_split_mega(__pyx_v_mega, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_split_phrases(__pyx_v_phrase, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4405,7 +2175,7 @@ static PyObject *__pyx_pf_10add_pinyin_26split_mega(CYTHON_UNUSED PyObject *__py
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.split_mega", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.split_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -4413,21 +2183,522 @@ static PyObject *__pyx_pf_10add_pinyin_26split_mega(CYTHON_UNUSED PyObject *__py
   return __pyx_r;
 }
 
-/* "add_pinyin.pyx":177
- * 	return grouped_mega
+/* "add_pinyin.pyx":67
+ * 	return grouped_phrase
  * 
- * cpdef tuple parse_phrases(list text_list):             # <<<<<<<<<<<<<<
- * 	pool = ThreadPool()
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)
+ * cpdef str add_span(list phrase):             # <<<<<<<<<<<<<<
+ * 	chinese, ispinyin, pinyin = phrase
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"
  */
 
-static PyObject *__pyx_pw_10add_pinyin_29parse_phrases(PyObject *__pyx_self, PyObject *__pyx_v_text_list); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list, CYTHON_UNUSED int __pyx_skip_dispatch) {
+static PyObject *__pyx_pw_10add_pinyin_9add_span(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_add_span(PyObject *__pyx_v_phrase, CYTHON_UNUSED int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_chinese = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v_ispinyin = NULL;
+  PyObject *__pyx_v_pinyin = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  __Pyx_RefNannySetupContext("add_span", 0);
+
+  /* "add_pinyin.pyx":68
+ * 
+ * cpdef str add_span(list phrase):
+ * 	chinese, ispinyin, pinyin = phrase             # <<<<<<<<<<<<<<
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"
+ * 
+ */
+  if (likely(__pyx_v_phrase != Py_None)) {
+    PyObject* sequence = __pyx_v_phrase;
+    Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+    if (unlikely(size != 3)) {
+      if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+      else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+      __PYX_ERR(0, 68, __pyx_L1_error)
+    }
+    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    __pyx_t_1 = PyList_GET_ITEM(sequence, 0); 
+    __pyx_t_2 = PyList_GET_ITEM(sequence, 1); 
+    __pyx_t_3 = PyList_GET_ITEM(sequence, 2); 
+    __Pyx_INCREF(__pyx_t_1);
+    __Pyx_INCREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_t_3);
+    #else
+    __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 68, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 68, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    #endif
+  } else {
+    __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 68, __pyx_L1_error)
+  }
+  __pyx_v_chinese = __pyx_t_1;
+  __pyx_t_1 = 0;
+  __pyx_v_ispinyin = __pyx_t_2;
+  __pyx_t_2 = 0;
+  __pyx_v_pinyin = __pyx_t_3;
+  __pyx_t_3 = 0;
+
+  /* "add_pinyin.pyx":69
+ * cpdef str add_span(list phrase):
+ * 	chinese, ispinyin, pinyin = phrase
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"             # <<<<<<<<<<<<<<
+ * 
+ * cpdef str group_phrases(list phrase):
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_3 = PyUnicode_Join(__pyx_kp_u__4, __pyx_v_pinyin); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_kp_u_span_class_pinyin_span, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyUnicode_Concat(__pyx_t_2, __pyx_kp_u_span); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = PyUnicode_Join(__pyx_kp_u__4, __pyx_v_chinese); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyUnicode_Concat(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyUnicode_Concat(__pyx_t_1, __pyx_kp_u_span); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = ((PyObject*)__pyx_t_2);
+  __pyx_t_2 = 0;
+  goto __pyx_L0;
+
+  /* "add_pinyin.pyx":67
+ * 	return grouped_phrase
+ * 
+ * cpdef str add_span(list phrase):             # <<<<<<<<<<<<<<
+ * 	chinese, ispinyin, pinyin = phrase
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_AddTraceback("add_pinyin.add_span", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_chinese);
+  __Pyx_XDECREF(__pyx_v_ispinyin);
+  __Pyx_XDECREF(__pyx_v_pinyin);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_10add_pinyin_9add_span(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_9add_span(PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("add_span (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrase), (&PyList_Type), 1, "phrase", 1))) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_8add_span(__pyx_self, ((PyObject*)__pyx_v_phrase));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_10add_pinyin_8add_span(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("add_span", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_10add_pinyin_add_span(__pyx_v_phrase, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("add_pinyin.add_span", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "add_pinyin.pyx":71
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"
+ * 
+ * cpdef str group_phrases(list phrase):             # <<<<<<<<<<<<<<
+ * 	cdef str final_phrase = ""
+ * 	if not phrase[0][1]:
+ */
+
+static PyObject *__pyx_pw_10add_pinyin_11group_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_group_phrases(PyObject *__pyx_v_phrase, CYTHON_UNUSED int __pyx_skip_dispatch) {
+  PyObject *__pyx_v_final_phrase = 0;
+  PyObject *__pyx_v_chn = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v_tru = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v_pin = NULL;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  int __pyx_t_3;
+  int __pyx_t_4;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
+  PyObject *(*__pyx_t_8)(PyObject *);
+  Py_ssize_t __pyx_t_9;
+  __Pyx_RefNannySetupContext("group_phrases", 0);
+
+  /* "add_pinyin.pyx":72
+ * 
+ * cpdef str group_phrases(list phrase):
+ * 	cdef str final_phrase = ""             # <<<<<<<<<<<<<<
+ * 	if not phrase[0][1]:
+ * 		chn, tru, pin = zip(*phrase)
+ */
+  __Pyx_INCREF(__pyx_kp_u__4);
+  __pyx_v_final_phrase = __pyx_kp_u__4;
+
+  /* "add_pinyin.pyx":73
+ * cpdef str group_phrases(list phrase):
+ * 	cdef str final_phrase = ""
+ * 	if not phrase[0][1]:             # <<<<<<<<<<<<<<
+ * 		chn, tru, pin = zip(*phrase)
+ * 		final_phrase += "".join(chn)
+ */
+  if (unlikely(__pyx_v_phrase == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(0, 73, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_phrase, 0, long, 1, __Pyx_PyInt_From_long, 1, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_1, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_4 = ((!__pyx_t_3) != 0);
+  if (__pyx_t_4) {
+
+    /* "add_pinyin.pyx":74
+ * 	cdef str final_phrase = ""
+ * 	if not phrase[0][1]:
+ * 		chn, tru, pin = zip(*phrase)             # <<<<<<<<<<<<<<
+ * 		final_phrase += "".join(chn)
+ * 	elif len(phrase) > 12:
+ */
+    __pyx_t_2 = PySequence_Tuple(__pyx_v_phrase); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
+      PyObject* sequence = __pyx_t_1;
+      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+      if (unlikely(size != 3)) {
+        if (size > 3) __Pyx_RaiseTooManyValuesError(3);
+        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+        __PYX_ERR(0, 74, __pyx_L1_error)
+      }
+      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+      if (likely(PyTuple_CheckExact(sequence))) {
+        __pyx_t_2 = PyTuple_GET_ITEM(sequence, 0); 
+        __pyx_t_5 = PyTuple_GET_ITEM(sequence, 1); 
+        __pyx_t_6 = PyTuple_GET_ITEM(sequence, 2); 
+      } else {
+        __pyx_t_2 = PyList_GET_ITEM(sequence, 0); 
+        __pyx_t_5 = PyList_GET_ITEM(sequence, 1); 
+        __pyx_t_6 = PyList_GET_ITEM(sequence, 2); 
+      }
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_6);
+      #else
+      __pyx_t_2 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_5 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_6 = PySequence_ITEM(sequence, 2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      #endif
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    } else {
+      Py_ssize_t index = -1;
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 74, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+      __pyx_t_8 = Py_TYPE(__pyx_t_7)->tp_iternext;
+      index = 0; __pyx_t_2 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_2)) goto __pyx_L4_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_2);
+      index = 1; __pyx_t_5 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_5)) goto __pyx_L4_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_5);
+      index = 2; __pyx_t_6 = __pyx_t_8(__pyx_t_7); if (unlikely(!__pyx_t_6)) goto __pyx_L4_unpacking_failed;
+      __Pyx_GOTREF(__pyx_t_6);
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_8(__pyx_t_7), 3) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
+      __pyx_t_8 = NULL;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      goto __pyx_L5_unpacking_done;
+      __pyx_L4_unpacking_failed:;
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+      __pyx_t_8 = NULL;
+      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+      __PYX_ERR(0, 74, __pyx_L1_error)
+      __pyx_L5_unpacking_done:;
+    }
+    __pyx_v_chn = __pyx_t_2;
+    __pyx_t_2 = 0;
+    __pyx_v_tru = __pyx_t_5;
+    __pyx_t_5 = 0;
+    __pyx_v_pin = __pyx_t_6;
+    __pyx_t_6 = 0;
+
+    /* "add_pinyin.pyx":75
+ * 	if not phrase[0][1]:
+ * 		chn, tru, pin = zip(*phrase)
+ * 		final_phrase += "".join(chn)             # <<<<<<<<<<<<<<
+ * 	elif len(phrase) > 12:
+ * 		final_phrase += add_span(list(zip(*phrase[:12])))
+ */
+    __pyx_t_1 = PyUnicode_Join(__pyx_kp_u__4, __pyx_v_chn); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_6 = __Pyx_PyUnicode_Concat(__pyx_v_final_phrase, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_6));
+    __pyx_t_6 = 0;
+
+    /* "add_pinyin.pyx":73
+ * cpdef str group_phrases(list phrase):
+ * 	cdef str final_phrase = ""
+ * 	if not phrase[0][1]:             # <<<<<<<<<<<<<<
+ * 		chn, tru, pin = zip(*phrase)
+ * 		final_phrase += "".join(chn)
+ */
+    goto __pyx_L3;
+  }
+
+  /* "add_pinyin.pyx":76
+ * 		chn, tru, pin = zip(*phrase)
+ * 		final_phrase += "".join(chn)
+ * 	elif len(phrase) > 12:             # <<<<<<<<<<<<<<
+ * 		final_phrase += add_span(list(zip(*phrase[:12])))
+ * 		final_phrase += add_span(list(zip(*phrase[12:])))
+ */
+  if (unlikely(__pyx_v_phrase == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
+    __PYX_ERR(0, 76, __pyx_L1_error)
+  }
+  __pyx_t_9 = PyList_GET_SIZE(__pyx_v_phrase); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 76, __pyx_L1_error)
+  __pyx_t_4 = ((__pyx_t_9 > 12) != 0);
+  if (__pyx_t_4) {
+
+    /* "add_pinyin.pyx":77
+ * 		final_phrase += "".join(chn)
+ * 	elif len(phrase) > 12:
+ * 		final_phrase += add_span(list(zip(*phrase[:12])))             # <<<<<<<<<<<<<<
+ * 		final_phrase += add_span(list(zip(*phrase[12:])))
+ * 	else:
+ */
+    if (unlikely(__pyx_v_phrase == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 77, __pyx_L1_error)
+    }
+    __pyx_t_6 = __Pyx_PyList_GetSlice(__pyx_v_phrase, 0, 12); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_1 = PySequence_Tuple(__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_1, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = PySequence_List(__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_1), 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyUnicode_ConcatSafe(__pyx_v_final_phrase, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_1));
+    __pyx_t_1 = 0;
+
+    /* "add_pinyin.pyx":78
+ * 	elif len(phrase) > 12:
+ * 		final_phrase += add_span(list(zip(*phrase[:12])))
+ * 		final_phrase += add_span(list(zip(*phrase[12:])))             # <<<<<<<<<<<<<<
+ * 	else:
+ * 		final_phrase += add_span(list(zip(*phrase)))
+ */
+    if (unlikely(__pyx_v_phrase == Py_None)) {
+      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+      __PYX_ERR(0, 78, __pyx_L1_error)
+    }
+    __pyx_t_1 = __Pyx_PyList_GetSlice(__pyx_v_phrase, 12, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_6 = PySequence_Tuple(__pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = PySequence_List(__pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_6), 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = __Pyx_PyUnicode_ConcatSafe(__pyx_v_final_phrase, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_6));
+    __pyx_t_6 = 0;
+
+    /* "add_pinyin.pyx":76
+ * 		chn, tru, pin = zip(*phrase)
+ * 		final_phrase += "".join(chn)
+ * 	elif len(phrase) > 12:             # <<<<<<<<<<<<<<
+ * 		final_phrase += add_span(list(zip(*phrase[:12])))
+ * 		final_phrase += add_span(list(zip(*phrase[12:])))
+ */
+    goto __pyx_L3;
+  }
+
+  /* "add_pinyin.pyx":80
+ * 		final_phrase += add_span(list(zip(*phrase[12:])))
+ * 	else:
+ * 		final_phrase += add_span(list(zip(*phrase)))             # <<<<<<<<<<<<<<
+ * 	return final_phrase
+ * 
+ */
+  /*else*/ {
+    __pyx_t_6 = PySequence_Tuple(__pyx_v_phrase); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = PySequence_List(__pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_6), 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = __Pyx_PyUnicode_ConcatSafe(__pyx_v_final_phrase, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 80, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_6));
+    __pyx_t_6 = 0;
+  }
+  __pyx_L3:;
+
+  /* "add_pinyin.pyx":81
+ * 	else:
+ * 		final_phrase += add_span(list(zip(*phrase)))
+ * 	return final_phrase             # <<<<<<<<<<<<<<
+ * 
+ * cpdef str group_and_format(list phrases):
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(__pyx_v_final_phrase);
+  __pyx_r = __pyx_v_final_phrase;
+  goto __pyx_L0;
+
+  /* "add_pinyin.pyx":71
+ * 	return '<span class="pinyin"><span>' + "".join(pinyin) + "</span>" + "".join(chinese) + "</span>"
+ * 
+ * cpdef str group_phrases(list phrase):             # <<<<<<<<<<<<<<
+ * 	cdef str final_phrase = ""
+ * 	if not phrase[0][1]:
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
+  __Pyx_AddTraceback("add_pinyin.group_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_final_phrase);
+  __Pyx_XDECREF(__pyx_v_chn);
+  __Pyx_XDECREF(__pyx_v_tru);
+  __Pyx_XDECREF(__pyx_v_pin);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_10add_pinyin_11group_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_11group_phrases(PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("group_phrases (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrase), (&PyList_Type), 1, "phrase", 1))) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_10group_phrases(__pyx_self, ((PyObject*)__pyx_v_phrase));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_10add_pinyin_10group_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("group_phrases", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_10add_pinyin_group_phrases(__pyx_v_phrase, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("add_pinyin.group_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "add_pinyin.pyx":83
+ * 	return final_phrase
+ * 
+ * cpdef str group_and_format(list phrases):             # <<<<<<<<<<<<<<
+ * 	pool = ThreadPool()
+ * 	split_text = split_phrases(phrases)
+ */
+
+static PyObject *__pyx_pw_10add_pinyin_13group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_phrases, CYTHON_UNUSED int __pyx_skip_dispatch) {
   PyObject *__pyx_v_pool = NULL;
-  PyObject *__pyx_v_chinese_char_bool_map = 0;
-  PyObject *__pyx_v_mega = 0;
-  PyObject *__pyx_v_chinese_mega = NULL;
-  PyObject *__pyx_v_non_chinese_mega = NULL;
+  PyObject *__pyx_v_split_text = NULL;
+  PyObject *__pyx_v_final_phrases = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -4436,17 +2707,16 @@ static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list,
   PyObject *__pyx_t_4 = NULL;
   int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
-  Py_ssize_t __pyx_t_7;
-  __Pyx_RefNannySetupContext("parse_phrases", 0);
+  __Pyx_RefNannySetupContext("group_and_format", 0);
 
-  /* "add_pinyin.pyx":178
+  /* "add_pinyin.pyx":84
  * 
- * cpdef tuple parse_phrases(list text_list):
+ * cpdef str group_and_format(list phrases):
  * 	pool = ThreadPool()             # <<<<<<<<<<<<<<
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)
- * 	cdef list mega = list(zip(text_list,pinyin(text_list),range(len(text_list)),chinese_char_bool_map))
+ * 	split_text = split_phrases(phrases)
+ * 	cdef list final_phrases = pool.map(group_phrases, split_text)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ThreadPool); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ThreadPool); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -4459,26 +2729,38 @@ static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list,
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_pool = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":179
- * cpdef tuple parse_phrases(list text_list):
+  /* "add_pinyin.pyx":85
+ * cpdef str group_and_format(list phrases):
  * 	pool = ThreadPool()
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)             # <<<<<<<<<<<<<<
- * 	cdef list mega = list(zip(text_list,pinyin(text_list),range(len(text_list)),chinese_char_bool_map))
- * 	chinese_mega = list(filter(sort_key_true,mega))
+ * 	split_text = split_phrases(phrases)             # <<<<<<<<<<<<<<
+ * 	cdef list final_phrases = pool.map(group_phrases, split_text)
+ * 	pool.close()
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_map); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 179, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_split_phrases(__pyx_v_phrases, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 85, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_v_split_text = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":86
+ * 	pool = ThreadPool()
+ * 	split_text = split_phrases(phrases)
+ * 	cdef list final_phrases = pool.map(group_phrases, split_text)             # <<<<<<<<<<<<<<
+ * 	pool.close()
+ * 	pool.join()
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_map); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_is_chinese_char); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 179, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_group_phrases); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 86, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   __pyx_t_5 = 0;
@@ -4494,8 +2776,8 @@ static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list,
   }
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_3, __pyx_v_text_list};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 179, __pyx_L1_error)
+    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_3, __pyx_v_split_text};
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -4503,45 +2785,45 @@ static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list,
   #endif
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_3, __pyx_v_text_list};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 179, __pyx_L1_error)
+    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_3, __pyx_v_split_text};
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else
   #endif
   {
-    __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 179, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     if (__pyx_t_4) {
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
     }
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_t_3);
-    __Pyx_INCREF(__pyx_v_text_list);
-    __Pyx_GIVEREF(__pyx_v_text_list);
-    PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_text_list);
+    __Pyx_INCREF(__pyx_v_split_text);
+    __Pyx_GIVEREF(__pyx_v_split_text);
+    PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_split_text);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 179, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 179, __pyx_L1_error)
-  __pyx_v_chinese_char_bool_map = ((PyObject*)__pyx_t_1);
+  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_v_final_phrases = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":180
- * 	pool = ThreadPool()
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)
- * 	cdef list mega = list(zip(text_list,pinyin(text_list),range(len(text_list)),chinese_char_bool_map))             # <<<<<<<<<<<<<<
- * 	chinese_mega = list(filter(sort_key_true,mega))
- * 	non_chinese_mega = list(filter(sort_key_false,mega))
+  /* "add_pinyin.pyx":87
+ * 	split_text = split_phrases(phrases)
+ * 	cdef list final_phrases = pool.map(group_phrases, split_text)
+ * 	pool.close()             # <<<<<<<<<<<<<<
+ * 	pool.join()
+ * 	return "".join(final_phrases)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_pinyin); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_close); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_6 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
     __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
     if (likely(__pyx_t_6)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
@@ -4550,651 +2832,216 @@ static PyObject *__pyx_f_10add_pinyin_parse_phrases(PyObject *__pyx_v_text_list,
       __Pyx_DECREF_SET(__pyx_t_2, function);
     }
   }
-  if (!__pyx_t_6) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_text_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+  if (__pyx_t_6) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 87, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":88
+ * 	cdef list final_phrases = pool.map(group_phrases, split_text)
+ * 	pool.close()
+ * 	pool.join()             # <<<<<<<<<<<<<<
+ * 	return "".join(final_phrases)
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_join); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (__pyx_t_6) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":89
+ * 	pool.close()
+ * 	pool.join()
+ * 	return "".join(final_phrases)             # <<<<<<<<<<<<<<
+ * 
+ * cpdef str apply_pinyin(str chn):
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = PyUnicode_Join(__pyx_kp_u__4, __pyx_v_final_phrases); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "add_pinyin.pyx":83
+ * 	return final_phrase
+ * 
+ * cpdef str group_and_format(list phrases):             # <<<<<<<<<<<<<<
+ * 	pool = ThreadPool()
+ * 	split_text = split_phrases(phrases)
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("add_pinyin.group_and_format", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_pool);
+  __Pyx_XDECREF(__pyx_v_split_text);
+  __Pyx_XDECREF(__pyx_v_final_phrases);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static PyObject *__pyx_pw_10add_pinyin_13group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_phrases); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_13group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("group_and_format (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrases), (&PyList_Type), 1, "phrases", 1))) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_12group_and_format(__pyx_self, ((PyObject*)__pyx_v_phrases));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_10add_pinyin_12group_and_format(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrases) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("group_and_format", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __pyx_f_10add_pinyin_group_and_format(__pyx_v_phrases, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("add_pinyin.group_and_format", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "add_pinyin.pyx":91
+ * 	return "".join(final_phrases)
+ * 
+ * cpdef str apply_pinyin(str chn):             # <<<<<<<<<<<<<<
+ * 	return pinyin(chn)[0][0] + " "
+ * 
+ */
+
+static PyObject *__pyx_pw_10add_pinyin_15apply_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_chn); /*proto*/
+static PyObject *__pyx_f_10add_pinyin_apply_pinyin(PyObject *__pyx_v_chn, CYTHON_UNUSED int __pyx_skip_dispatch) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  __Pyx_RefNannySetupContext("apply_pinyin", 0);
+
+  /* "add_pinyin.pyx":92
+ * 
+ * cpdef str apply_pinyin(str chn):
+ * 	return pinyin(chn)[0][0] + " "             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_pinyin); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_3) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_chn); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_text_list};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_chn};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_text_list};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_chn};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6); __pyx_t_6 = NULL;
-      __Pyx_INCREF(__pyx_v_text_list);
-      __Pyx_GIVEREF(__pyx_v_text_list);
-      PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_text_list);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 92, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
+      __Pyx_INCREF(__pyx_v_chn);
+      __Pyx_GIVEREF(__pyx_v_chn);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_chn);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(__pyx_v_text_list == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 180, __pyx_L1_error)
-  }
-  __pyx_t_7 = PyList_GET_SIZE(__pyx_v_text_list); if (unlikely(__pyx_t_7 == ((Py_ssize_t)-1))) __PYX_ERR(0, 180, __pyx_L1_error)
-  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_1, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_builtin_range, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_INCREF(__pyx_v_text_list);
-  __Pyx_GIVEREF(__pyx_v_text_list);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_text_list);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_t_3);
-  __Pyx_INCREF(__pyx_v_chinese_char_bool_map);
-  __Pyx_GIVEREF(__pyx_v_chinese_char_bool_map);
-  PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_v_chinese_char_bool_map);
-  __pyx_t_1 = 0;
-  __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PySequence_List(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_mega = ((PyObject*)__pyx_t_2);
-  __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":181
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)
- * 	cdef list mega = list(zip(text_list,pinyin(text_list),range(len(text_list)),chinese_char_bool_map))
- * 	chinese_mega = list(filter(sort_key_true,mega))             # <<<<<<<<<<<<<<
- * 	non_chinese_mega = list(filter(sort_key_false,mega))
- * 	non_chinese_mega = pool.map(filter_newline, non_chinese_mega)
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sort_key_true); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 181, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
-  __Pyx_INCREF(__pyx_v_mega);
-  __Pyx_GIVEREF(__pyx_v_mega);
-  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_mega);
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_filter, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PySequence_List(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 181, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_v_chinese_mega = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
-
-  /* "add_pinyin.pyx":182
- * 	cdef list mega = list(zip(text_list,pinyin(text_list),range(len(text_list)),chinese_char_bool_map))
- * 	chinese_mega = list(filter(sort_key_true,mega))
- * 	non_chinese_mega = list(filter(sort_key_false,mega))             # <<<<<<<<<<<<<<
- * 	non_chinese_mega = pool.map(filter_newline, non_chinese_mega)
- * 	pool.close()
- */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_sort_key_false); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
-  __Pyx_INCREF(__pyx_v_mega);
-  __Pyx_GIVEREF(__pyx_v_mega);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_mega);
-  __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_filter, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PySequence_List(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 182, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_non_chinese_mega = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":183
- * 	chinese_mega = list(filter(sort_key_true,mega))
- * 	non_chinese_mega = list(filter(sort_key_false,mega))
- * 	non_chinese_mega = pool.map(filter_newline, non_chinese_mega)             # <<<<<<<<<<<<<<
- * 	pool.close()
- * 	pool.join()
- */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_map); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 183, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_filter_newline); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = NULL;
-  __pyx_t_5 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_6)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_5 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_t_1, __pyx_v_non_chinese_mega};
-    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_t_1, __pyx_v_non_chinese_mega};
-    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  } else
-  #endif
-  {
-    __pyx_t_4 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 183, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    if (__pyx_t_6) {
-      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-    }
-    __Pyx_GIVEREF(__pyx_t_1);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_5, __pyx_t_1);
-    __Pyx_INCREF(__pyx_v_non_chinese_mega);
-    __Pyx_GIVEREF(__pyx_v_non_chinese_mega);
-    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_5, __pyx_v_non_chinese_mega);
-    __pyx_t_1 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF_SET(__pyx_v_non_chinese_mega, __pyx_t_2);
-  __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":184
- * 	non_chinese_mega = list(filter(sort_key_false,mega))
- * 	non_chinese_mega = pool.map(filter_newline, non_chinese_mega)
- * 	pool.close()             # <<<<<<<<<<<<<<
- * 	pool.join()
- * 	return (chinese_mega, non_chinese_mega)
- */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_close); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 184, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  } else {
-    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":185
- * 	non_chinese_mega = pool.map(filter_newline, non_chinese_mega)
- * 	pool.close()
- * 	pool.join()             # <<<<<<<<<<<<<<
- * 	return (chinese_mega, non_chinese_mega)
- * 
- */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 185, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 185, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  } else {
-    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 185, __pyx_L1_error)
-  }
+  __pyx_t_2 = PyNumber_Add(__pyx_t_1, __pyx_kp_u_); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":186
- * 	pool.close()
- * 	pool.join()
- * 	return (chinese_mega, non_chinese_mega)             # <<<<<<<<<<<<<<
- * 
- * cpdef str add_span(tuple final):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_INCREF(__pyx_v_chinese_mega);
-  __Pyx_GIVEREF(__pyx_v_chinese_mega);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_chinese_mega);
-  __Pyx_INCREF(__pyx_v_non_chinese_mega);
-  __Pyx_GIVEREF(__pyx_v_non_chinese_mega);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_non_chinese_mega);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (!(likely(PyUnicode_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "unicode", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(0, 92, __pyx_L1_error)
   __pyx_r = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":177
- * 	return grouped_mega
+  /* "add_pinyin.pyx":91
+ * 	return "".join(final_phrases)
  * 
- * cpdef tuple parse_phrases(list text_list):             # <<<<<<<<<<<<<<
- * 	pool = ThreadPool()
- * 	cdef list chinese_char_bool_map = pool.map(is_chinese_char, text_list)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("add_pinyin.parse_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_pool);
-  __Pyx_XDECREF(__pyx_v_chinese_char_bool_map);
-  __Pyx_XDECREF(__pyx_v_mega);
-  __Pyx_XDECREF(__pyx_v_chinese_mega);
-  __Pyx_XDECREF(__pyx_v_non_chinese_mega);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_29parse_phrases(PyObject *__pyx_self, PyObject *__pyx_v_text_list); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_29parse_phrases(PyObject *__pyx_self, PyObject *__pyx_v_text_list) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("parse_phrases (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text_list), (&PyList_Type), 1, "text_list", 1))) __PYX_ERR(0, 177, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_28parse_phrases(__pyx_self, ((PyObject*)__pyx_v_text_list));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_28parse_phrases(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text_list) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("parse_phrases", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_parse_phrases(__pyx_v_text_list, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.parse_phrases", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":188
- * 	return (chinese_mega, non_chinese_mega)
- * 
- * cpdef str add_span(tuple final):             # <<<<<<<<<<<<<<
- * 	chinese, pinyin = final
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- */
-
-static PyObject *__pyx_pw_10add_pinyin_31add_span(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_add_span(PyObject *__pyx_v_final, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_chinese = NULL;
-  PyObject *__pyx_v_pinyin = NULL;
-  PyObject *__pyx_v_phrase = 0;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("add_span", 0);
-
-  /* "add_pinyin.pyx":189
- * 
- * cpdef str add_span(tuple final):
- * 	chinese, pinyin = final             # <<<<<<<<<<<<<<
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- * 		+ pinyin + "</span>" + chinese + "</span>"
- */
-  if (likely(__pyx_v_final != Py_None)) {
-    PyObject* sequence = __pyx_v_final;
-    Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
-    if (unlikely(size != 2)) {
-      if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-      else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-      __PYX_ERR(0, 189, __pyx_L1_error)
-    }
-    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_1 = PyTuple_GET_ITEM(sequence, 0); 
-    __pyx_t_2 = PyTuple_GET_ITEM(sequence, 1); 
-    __Pyx_INCREF(__pyx_t_1);
-    __Pyx_INCREF(__pyx_t_2);
-    #else
-    __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 189, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    #endif
-  } else {
-    __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 189, __pyx_L1_error)
-  }
-  __pyx_v_chinese = __pyx_t_1;
-  __pyx_t_1 = 0;
-  __pyx_v_pinyin = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":191
- * 	chinese, pinyin = final
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- * 		+ pinyin + "</span>" + chinese + "</span>"             # <<<<<<<<<<<<<<
- * 	#print(phrase)
- * 	return phrase
- */
-  __pyx_t_2 = PyNumber_Add(__pyx_kp_s_utf_span_class_pinyin_span, __pyx_v_pinyin); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 191, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyNumber_Add(__pyx_t_2, __pyx_kp_s_utf_span); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyNumber_Add(__pyx_t_1, __pyx_v_chinese); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 191, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyNumber_Add(__pyx_t_2, __pyx_kp_s_utf_span); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 191, __pyx_L1_error)
-  __pyx_v_phrase = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":193
- * 		+ pinyin + "</span>" + chinese + "</span>"
- * 	#print(phrase)
- * 	return phrase             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple strip_tuple(tuple final):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_phrase);
-  __pyx_r = __pyx_v_phrase;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":188
- * 	return (chinese_mega, non_chinese_mega)
- * 
- * cpdef str add_span(tuple final):             # <<<<<<<<<<<<<<
- * 	chinese, pinyin = final
- * 	cdef str phrase = '<span class="pinyin"><span>' \
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("add_pinyin.add_span", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_chinese);
-  __Pyx_XDECREF(__pyx_v_pinyin);
-  __Pyx_XDECREF(__pyx_v_phrase);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_31add_span(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_31add_span(PyObject *__pyx_self, PyObject *__pyx_v_final) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("add_span (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_final), (&PyTuple_Type), 1, "final", 1))) __PYX_ERR(0, 188, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_30add_span(__pyx_self, ((PyObject*)__pyx_v_final));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_30add_span(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("add_span", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_add_span(__pyx_v_final, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 188, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.add_span", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":195
- * 	return phrase
- * 
- * cpdef tuple strip_tuple(tuple final):             # <<<<<<<<<<<<<<
- * 	return final[0]
- * 
- */
-
-static PyObject *__pyx_pw_10add_pinyin_33strip_tuple(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_strip_tuple(PyObject *__pyx_v_final, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("strip_tuple", 0);
-
-  /* "add_pinyin.pyx":196
- * 
- * cpdef tuple strip_tuple(tuple final):
- * 	return final[0]             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple strip_extra_col(tuple final):
- */
-  __Pyx_XDECREF(__pyx_r);
-  if (unlikely(__pyx_v_final == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 196, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_final, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (!(likely(PyTuple_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "tuple", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 196, __pyx_L1_error)
-  __pyx_r = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":195
- * 	return phrase
- * 
- * cpdef tuple strip_tuple(tuple final):             # <<<<<<<<<<<<<<
- * 	return final[0]
- * 
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.strip_tuple", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_33strip_tuple(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_33strip_tuple(PyObject *__pyx_self, PyObject *__pyx_v_final) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("strip_tuple (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_final), (&PyTuple_Type), 1, "final", 1))) __PYX_ERR(0, 195, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_32strip_tuple(__pyx_self, ((PyObject*)__pyx_v_final));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_32strip_tuple(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("strip_tuple", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_strip_tuple(__pyx_v_final, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.strip_tuple", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":198
- * 	return final[0]
- * 
- * cpdef tuple strip_extra_col(tuple final):             # <<<<<<<<<<<<<<
- * 	return (final[0], final[0], final[2],final[3])
- * 
- */
-
-static PyObject *__pyx_pw_10add_pinyin_35strip_extra_col(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_strip_extra_col(PyObject *__pyx_v_final, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  __Pyx_RefNannySetupContext("strip_extra_col", 0);
-
-  /* "add_pinyin.pyx":199
- * 
- * cpdef tuple strip_extra_col(tuple final):
- * 	return (final[0], final[0], final[2],final[3])             # <<<<<<<<<<<<<<
- * 
- * cpdef tuple process_mini_phrase(list phrase):
- */
-  __Pyx_XDECREF(__pyx_r);
-  if (unlikely(__pyx_v_final == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 199, __pyx_L1_error)
-  }
-  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v_final, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 199, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (unlikely(__pyx_v_final == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 199, __pyx_L1_error)
-  }
-  __pyx_t_2 = __Pyx_GetItemInt_Tuple(__pyx_v_final, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (unlikely(__pyx_v_final == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 199, __pyx_L1_error)
-  }
-  __pyx_t_3 = __Pyx_GetItemInt_Tuple(__pyx_v_final, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 199, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (unlikely(__pyx_v_final == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(0, 199, __pyx_L1_error)
-  }
-  __pyx_t_4 = __Pyx_GetItemInt_Tuple(__pyx_v_final, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 199, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 199, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_t_3);
-  __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_5, 3, __pyx_t_4);
-  __pyx_t_1 = 0;
-  __pyx_t_2 = 0;
-  __pyx_t_3 = 0;
-  __pyx_t_4 = 0;
-  __pyx_r = ((PyObject*)__pyx_t_5);
-  __pyx_t_5 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":198
- * 	return final[0]
- * 
- * cpdef tuple strip_extra_col(tuple final):             # <<<<<<<<<<<<<<
- * 	return (final[0], final[0], final[2],final[3])
+ * cpdef str apply_pinyin(str chn):             # <<<<<<<<<<<<<<
+ * 	return pinyin(chn)[0][0] + " "
  * 
  */
 
@@ -5204,8 +3051,7 @@ static PyObject *__pyx_f_10add_pinyin_strip_extra_col(PyObject *__pyx_v_final, C
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_AddTraceback("add_pinyin.strip_extra_col", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.apply_pinyin", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -5214,13 +3060,13 @@ static PyObject *__pyx_f_10add_pinyin_strip_extra_col(PyObject *__pyx_v_final, C
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_35strip_extra_col(PyObject *__pyx_self, PyObject *__pyx_v_final); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_35strip_extra_col(PyObject *__pyx_self, PyObject *__pyx_v_final) {
+static PyObject *__pyx_pw_10add_pinyin_15apply_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_chn); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_15apply_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_chn) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("strip_extra_col (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_final), (&PyTuple_Type), 1, "final", 1))) __PYX_ERR(0, 198, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_34strip_extra_col(__pyx_self, ((PyObject*)__pyx_v_final));
+  __Pyx_RefNannySetupContext("apply_pinyin (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_chn), (&PyUnicode_Type), 1, "chn", 1))) __PYX_ERR(0, 91, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_14apply_pinyin(__pyx_self, ((PyObject*)__pyx_v_chn));
 
   /* function exit code */
   goto __pyx_L0;
@@ -5231,13 +3077,13 @@ static PyObject *__pyx_pw_10add_pinyin_35strip_extra_col(PyObject *__pyx_self, P
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_34strip_extra_col(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_final) {
+static PyObject *__pyx_pf_10add_pinyin_14apply_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_chn) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("strip_extra_col", 0);
+  __Pyx_RefNannySetupContext("apply_pinyin", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_strip_extra_col(__pyx_v_final, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_apply_pinyin(__pyx_v_chn, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -5246,7 +3092,7 @@ static PyObject *__pyx_pf_10add_pinyin_34strip_extra_col(CYTHON_UNUSED PyObject 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.strip_extra_col", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("add_pinyin.apply_pinyin", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
@@ -5254,622 +3100,19 @@ static PyObject *__pyx_pf_10add_pinyin_34strip_extra_col(CYTHON_UNUSED PyObject 
   return __pyx_r;
 }
 
-/* "add_pinyin.pyx":201
- * 	return (final[0], final[0], final[2],final[3])
- * 
- * cpdef tuple process_mini_phrase(list phrase):             # <<<<<<<<<<<<<<
- * 	cdef str pinyin_phrase = ""
- * 	cdef str chinese_phrase = ""
- */
-
-static PyObject *__pyx_pw_10add_pinyin_37process_mini_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_process_mini_phrase(PyObject *__pyx_v_phrase, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_pinyin_phrase = 0;
-  PyObject *__pyx_v_chinese_phrase = 0;
-  PyObject *__pyx_v_chn = NULL;
-  PyObject *__pyx_v_pin = NULL;
-  CYTHON_UNUSED PyObject *__pyx_v_ind = NULL;
-  CYTHON_UNUSED PyObject *__pyx_v_tru = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  Py_ssize_t __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
-  PyObject *(*__pyx_t_9)(PyObject *);
-  __Pyx_RefNannySetupContext("process_mini_phrase", 0);
-
-  /* "add_pinyin.pyx":202
- * 
- * cpdef tuple process_mini_phrase(list phrase):
- * 	cdef str pinyin_phrase = ""             # <<<<<<<<<<<<<<
- * 	cdef str chinese_phrase = ""
- * 	for chn, pin, ind, tru in phrase:
- */
-  __Pyx_INCREF(__pyx_kp_s_utf__3);
-  __pyx_v_pinyin_phrase = __pyx_kp_s_utf__3;
-
-  /* "add_pinyin.pyx":203
- * cpdef tuple process_mini_phrase(list phrase):
- * 	cdef str pinyin_phrase = ""
- * 	cdef str chinese_phrase = ""             # <<<<<<<<<<<<<<
- * 	for chn, pin, ind, tru in phrase:
- * 		#print("chn,pin,ind,tru")
- */
-  __Pyx_INCREF(__pyx_kp_s_utf__3);
-  __pyx_v_chinese_phrase = __pyx_kp_s_utf__3;
-
-  /* "add_pinyin.pyx":204
- * 	cdef str pinyin_phrase = ""
- * 	cdef str chinese_phrase = ""
- * 	for chn, pin, ind, tru in phrase:             # <<<<<<<<<<<<<<
- * 		#print("chn,pin,ind,tru")
- * 		#print(chn,pin,ind,tru)
- */
-  if (unlikely(__pyx_v_phrase == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 204, __pyx_L1_error)
-  }
-  __pyx_t_1 = __pyx_v_phrase; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
-  for (;;) {
-    if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
-    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_3 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_3); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 204, __pyx_L1_error)
-    #else
-    __pyx_t_3 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    #endif
-    if ((likely(PyTuple_CheckExact(__pyx_t_3))) || (PyList_CheckExact(__pyx_t_3))) {
-      PyObject* sequence = __pyx_t_3;
-      Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
-      if (unlikely(size != 4)) {
-        if (size > 4) __Pyx_RaiseTooManyValuesError(4);
-        else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 204, __pyx_L1_error)
-      }
-      #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-      if (likely(PyTuple_CheckExact(sequence))) {
-        __pyx_t_4 = PyTuple_GET_ITEM(sequence, 0); 
-        __pyx_t_5 = PyTuple_GET_ITEM(sequence, 1); 
-        __pyx_t_6 = PyTuple_GET_ITEM(sequence, 2); 
-        __pyx_t_7 = PyTuple_GET_ITEM(sequence, 3); 
-      } else {
-        __pyx_t_4 = PyList_GET_ITEM(sequence, 0); 
-        __pyx_t_5 = PyList_GET_ITEM(sequence, 1); 
-        __pyx_t_6 = PyList_GET_ITEM(sequence, 2); 
-        __pyx_t_7 = PyList_GET_ITEM(sequence, 3); 
-      }
-      __Pyx_INCREF(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_5);
-      __Pyx_INCREF(__pyx_t_6);
-      __Pyx_INCREF(__pyx_t_7);
-      #else
-      {
-        Py_ssize_t i;
-        PyObject** temps[4] = {&__pyx_t_4,&__pyx_t_5,&__pyx_t_6,&__pyx_t_7};
-        for (i=0; i < 4; i++) {
-          PyObject* item = PySequence_ITEM(sequence, i); if (unlikely(!item)) __PYX_ERR(0, 204, __pyx_L1_error)
-          __Pyx_GOTREF(item);
-          *(temps[i]) = item;
-        }
-      }
-      #endif
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    } else {
-      Py_ssize_t index = -1;
-      PyObject** temps[4] = {&__pyx_t_4,&__pyx_t_5,&__pyx_t_6,&__pyx_t_7};
-      __pyx_t_8 = PyObject_GetIter(__pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 204, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_9 = Py_TYPE(__pyx_t_8)->tp_iternext;
-      for (index=0; index < 4; index++) {
-        PyObject* item = __pyx_t_9(__pyx_t_8); if (unlikely(!item)) goto __pyx_L5_unpacking_failed;
-        __Pyx_GOTREF(item);
-        *(temps[index]) = item;
-      }
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_9(__pyx_t_8), 4) < 0) __PYX_ERR(0, 204, __pyx_L1_error)
-      __pyx_t_9 = NULL;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      goto __pyx_L6_unpacking_done;
-      __pyx_L5_unpacking_failed:;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __pyx_t_9 = NULL;
-      if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 204, __pyx_L1_error)
-      __pyx_L6_unpacking_done:;
-    }
-    __Pyx_XDECREF_SET(__pyx_v_chn, __pyx_t_4);
-    __pyx_t_4 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_pin, __pyx_t_5);
-    __pyx_t_5 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_ind, __pyx_t_6);
-    __pyx_t_6 = 0;
-    __Pyx_XDECREF_SET(__pyx_v_tru, __pyx_t_7);
-    __pyx_t_7 = 0;
-
-    /* "add_pinyin.pyx":207
- * 		#print("chn,pin,ind,tru")
- * 		#print(chn,pin,ind,tru)
- * 		chinese_phrase += chn             # <<<<<<<<<<<<<<
- * 		pinyin_phrase += pin + "&nbsp"
- * 	return (chinese_phrase, pinyin_phrase)
- */
-    __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_v_chinese_phrase, __pyx_v_chn); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 207, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (!(likely(PyString_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 207, __pyx_L1_error)
-    __Pyx_DECREF_SET(__pyx_v_chinese_phrase, ((PyObject*)__pyx_t_3));
-    __pyx_t_3 = 0;
-
-    /* "add_pinyin.pyx":208
- * 		#print(chn,pin,ind,tru)
- * 		chinese_phrase += chn
- * 		pinyin_phrase += pin + "&nbsp"             # <<<<<<<<<<<<<<
- * 	return (chinese_phrase, pinyin_phrase)
- * 
- */
-    __pyx_t_3 = PyNumber_Add(__pyx_v_pin, __pyx_kp_s_utf_nbsp); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = PyNumber_InPlaceAdd(__pyx_v_pinyin_phrase, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 208, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_7);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (!(likely(PyString_CheckExact(__pyx_t_7))||((__pyx_t_7) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_7)->tp_name), 0))) __PYX_ERR(0, 208, __pyx_L1_error)
-    __Pyx_DECREF_SET(__pyx_v_pinyin_phrase, ((PyObject*)__pyx_t_7));
-    __pyx_t_7 = 0;
-
-    /* "add_pinyin.pyx":204
- * 	cdef str pinyin_phrase = ""
- * 	cdef str chinese_phrase = ""
- * 	for chn, pin, ind, tru in phrase:             # <<<<<<<<<<<<<<
- * 		#print("chn,pin,ind,tru")
- * 		#print(chn,pin,ind,tru)
- */
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":209
- * 		chinese_phrase += chn
- * 		pinyin_phrase += pin + "&nbsp"
- * 	return (chinese_phrase, pinyin_phrase)             # <<<<<<<<<<<<<<
- * 
- * cpdef str group_and_format(list mega):
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 209, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_v_chinese_phrase);
-  __Pyx_GIVEREF(__pyx_v_chinese_phrase);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_chinese_phrase);
-  __Pyx_INCREF(__pyx_v_pinyin_phrase);
-  __Pyx_GIVEREF(__pyx_v_pinyin_phrase);
-  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_v_pinyin_phrase);
-  __pyx_r = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":201
- * 	return (final[0], final[0], final[2],final[3])
- * 
- * cpdef tuple process_mini_phrase(list phrase):             # <<<<<<<<<<<<<<
- * 	cdef str pinyin_phrase = ""
- * 	cdef str chinese_phrase = ""
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
-  __Pyx_AddTraceback("add_pinyin.process_mini_phrase", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_pinyin_phrase);
-  __Pyx_XDECREF(__pyx_v_chinese_phrase);
-  __Pyx_XDECREF(__pyx_v_chn);
-  __Pyx_XDECREF(__pyx_v_pin);
-  __Pyx_XDECREF(__pyx_v_ind);
-  __Pyx_XDECREF(__pyx_v_tru);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_37process_mini_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrase); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_37process_mini_phrase(PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("process_mini_phrase (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_phrase), (&PyList_Type), 1, "phrase", 1))) __PYX_ERR(0, 201, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_36process_mini_phrase(__pyx_self, ((PyObject*)__pyx_v_phrase));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_36process_mini_phrase(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_phrase) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("process_mini_phrase", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_process_mini_phrase(__pyx_v_phrase, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 201, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.process_mini_phrase", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":211
- * 	return (chinese_phrase, pinyin_phrase)
- * 
- * cpdef str group_and_format(list mega):             # <<<<<<<<<<<<<<
- * 	#phrases = unzip(split_mega(mega))
- * 	phrases = split_mega(mega)
- */
-
-static PyObject *__pyx_pw_10add_pinyin_39group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_mega); /*proto*/
-static PyObject *__pyx_f_10add_pinyin_group_and_format(PyObject *__pyx_v_mega, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_phrases = NULL;
-  PyObject *__pyx_v_final_phrase = 0;
-  PyObject *__pyx_v_phrase = NULL;
-  PyObject *__pyx_v_chn = NULL;
-  CYTHON_UNUSED PyObject *__pyx_v_pin = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  Py_ssize_t __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  int __pyx_t_6;
-  PyObject *__pyx_t_7 = NULL;
-  Py_ssize_t __pyx_t_8;
-  __Pyx_RefNannySetupContext("group_and_format", 0);
-
-  /* "add_pinyin.pyx":213
- * cpdef str group_and_format(list mega):
- * 	#phrases = unzip(split_mega(mega))
- * 	phrases = split_mega(mega)             # <<<<<<<<<<<<<<
- * 	#print('process phrase: ',phrases[0])
- * 
- */
-  __pyx_t_1 = __pyx_f_10add_pinyin_split_mega(__pyx_v_mega, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 213, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_phrases = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":216
- * 	#print('process phrase: ',phrases[0])
- * 
- * 	cdef str final_phrase = ""             # <<<<<<<<<<<<<<
- * 	for phrase in phrases:
- * 		if not phrase[0][3]:
- */
-  __Pyx_INCREF(__pyx_kp_s_utf__3);
-  __pyx_v_final_phrase = __pyx_kp_s_utf__3;
-
-  /* "add_pinyin.pyx":217
- * 
- * 	cdef str final_phrase = ""
- * 	for phrase in phrases:             # <<<<<<<<<<<<<<
- * 		if not phrase[0][3]:
- * 			chn, pin = process_mini_phrase(phrase)
- */
-  if (unlikely(__pyx_v_phrases == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 217, __pyx_L1_error)
-  }
-  __pyx_t_1 = __pyx_v_phrases; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
-  for (;;) {
-    if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
-    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_3 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_3); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 217, __pyx_L1_error)
-    #else
-    __pyx_t_3 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    #endif
-    __Pyx_XDECREF_SET(__pyx_v_phrase, __pyx_t_3);
-    __pyx_t_3 = 0;
-
-    /* "add_pinyin.pyx":218
- * 	cdef str final_phrase = ""
- * 	for phrase in phrases:
- * 		if not phrase[0][3]:             # <<<<<<<<<<<<<<
- * 			chn, pin = process_mini_phrase(phrase)
- * 			final_phrase += chn
- */
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_phrase, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 218, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_GetItemInt(__pyx_t_3, 3, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 218, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 218, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_6 = ((!__pyx_t_5) != 0);
-    if (__pyx_t_6) {
-
-      /* "add_pinyin.pyx":219
- * 	for phrase in phrases:
- * 		if not phrase[0][3]:
- * 			chn, pin = process_mini_phrase(phrase)             # <<<<<<<<<<<<<<
- * 			final_phrase += chn
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- */
-      if (!(likely(PyList_CheckExact(__pyx_v_phrase))||((__pyx_v_phrase) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_v_phrase)->tp_name), 0))) __PYX_ERR(0, 219, __pyx_L1_error)
-      __pyx_t_4 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_v_phrase), 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 219, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (likely(__pyx_t_4 != Py_None)) {
-        PyObject* sequence = __pyx_t_4;
-        Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
-        if (unlikely(size != 2)) {
-          if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-          else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-          __PYX_ERR(0, 219, __pyx_L1_error)
-        }
-        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_3 = PyTuple_GET_ITEM(sequence, 0); 
-        __pyx_t_7 = PyTuple_GET_ITEM(sequence, 1); 
-        __Pyx_INCREF(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_7);
-        #else
-        __pyx_t_3 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 219, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_7 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 219, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_7);
-        #endif
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      } else {
-        __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 219, __pyx_L1_error)
-      }
-      __Pyx_XDECREF_SET(__pyx_v_chn, __pyx_t_3);
-      __pyx_t_3 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_pin, __pyx_t_7);
-      __pyx_t_7 = 0;
-
-      /* "add_pinyin.pyx":220
- * 		if not phrase[0][3]:
- * 			chn, pin = process_mini_phrase(phrase)
- * 			final_phrase += chn             # <<<<<<<<<<<<<<
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 12:
- */
-      __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_final_phrase, __pyx_v_chn); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 220, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 220, __pyx_L1_error)
-      __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_4));
-      __pyx_t_4 = 0;
-
-      /* "add_pinyin.pyx":218
- * 	cdef str final_phrase = ""
- * 	for phrase in phrases:
- * 		if not phrase[0][3]:             # <<<<<<<<<<<<<<
- * 			chn, pin = process_mini_phrase(phrase)
- * 			final_phrase += chn
- */
-      goto __pyx_L5;
-    }
-
-    /* "add_pinyin.pyx":222
- * 			final_phrase += chn
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 12:             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
- */
-    __pyx_t_8 = PyObject_Length(__pyx_v_phrase); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(0, 222, __pyx_L1_error)
-    __pyx_t_6 = ((__pyx_t_8 > 12) != 0);
-    if (__pyx_t_6) {
-
-      /* "add_pinyin.pyx":223
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 12:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
- * 		else:
- */
-      __pyx_t_4 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 0, 12, NULL, NULL, &__pyx_slice__6, 0, 1, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      if (!(likely(PyList_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(0, 223, __pyx_L1_error)
-      __pyx_t_7 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_t_4), 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 223, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_7), 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __pyx_t_7 = PyNumber_InPlaceAdd(__pyx_v_final_phrase, __pyx_t_4); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 223, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_7));
-      __pyx_t_7 = 0;
-
-      /* "add_pinyin.pyx":224
- * 		elif len(phrase) > 12:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))             # <<<<<<<<<<<<<<
- * 		else:
- * 			final_phrase += add_span(process_mini_phrase(phrase))
- */
-      __pyx_t_7 = __Pyx_PyObject_GetSlice(__pyx_v_phrase, 12, 0, NULL, NULL, &__pyx_slice__7, 1, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 224, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      if (!(likely(PyList_CheckExact(__pyx_t_7))||((__pyx_t_7) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_7)->tp_name), 0))) __PYX_ERR(0, 224, __pyx_L1_error)
-      __pyx_t_4 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_t_7), 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 224, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __pyx_t_7 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_4), 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 224, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_final_phrase, __pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 224, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_4));
-      __pyx_t_4 = 0;
-
-      /* "add_pinyin.pyx":222
- * 			final_phrase += chn
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 12:             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
- */
-      goto __pyx_L5;
-    }
-
-    /* "add_pinyin.pyx":226
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
- * 		else:
- * 			final_phrase += add_span(process_mini_phrase(phrase))             # <<<<<<<<<<<<<<
- * 	#print(final_phrase)
- * 	return final_phrase
- */
-    /*else*/ {
-      if (!(likely(PyList_CheckExact(__pyx_v_phrase))||((__pyx_v_phrase) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_v_phrase)->tp_name), 0))) __PYX_ERR(0, 226, __pyx_L1_error)
-      __pyx_t_4 = __pyx_f_10add_pinyin_process_mini_phrase(((PyObject*)__pyx_v_phrase), 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_7 = __pyx_f_10add_pinyin_add_span(((PyObject*)__pyx_t_4), 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_7);
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = PyNumber_InPlaceAdd(__pyx_v_final_phrase, __pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_DECREF_SET(__pyx_v_final_phrase, ((PyObject*)__pyx_t_4));
-      __pyx_t_4 = 0;
-    }
-    __pyx_L5:;
-
-    /* "add_pinyin.pyx":217
- * 
- * 	cdef str final_phrase = ""
- * 	for phrase in phrases:             # <<<<<<<<<<<<<<
- * 		if not phrase[0][3]:
- * 			chn, pin = process_mini_phrase(phrase)
- */
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":228
- * 			final_phrase += add_span(process_mini_phrase(phrase))
- * 	#print(final_phrase)
- * 	return final_phrase             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_final_phrase);
-  __pyx_r = __pyx_v_final_phrase;
-  goto __pyx_L0;
-
-  /* "add_pinyin.pyx":211
- * 	return (chinese_phrase, pinyin_phrase)
- * 
- * cpdef str group_and_format(list mega):             # <<<<<<<<<<<<<<
- * 	#phrases = unzip(split_mega(mega))
- * 	phrases = split_mega(mega)
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_AddTraceback("add_pinyin.group_and_format", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_phrases);
-  __Pyx_XDECREF(__pyx_v_final_phrase);
-  __Pyx_XDECREF(__pyx_v_phrase);
-  __Pyx_XDECREF(__pyx_v_chn);
-  __Pyx_XDECREF(__pyx_v_pin);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_39group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_mega); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_39group_and_format(PyObject *__pyx_self, PyObject *__pyx_v_mega) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("group_and_format (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mega), (&PyList_Type), 1, "mega", 1))) __PYX_ERR(0, 211, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_38group_and_format(__pyx_self, ((PyObject*)__pyx_v_mega));
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_10add_pinyin_38group_and_format(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_mega) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("group_and_format", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_group_and_format(__pyx_v_mega, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("add_pinyin.group_and_format", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "add_pinyin.pyx":231
+/* "add_pinyin.pyx":95
  * 
  * 
  * cpdef str add_pinyin(str text):             # <<<<<<<<<<<<<<
- * 	cdef list text_list = list(text)
- * 	cdef int i = 0
+ * 
+ * 	phrases = pd.DataFrame()
  */
 
-static PyObject *__pyx_pw_10add_pinyin_41add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_17add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
 static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_UNUSED int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_text_list = 0;
-  CYTHON_UNUSED int __pyx_v_i;
-  CYTHON_UNUSED PyObject *__pyx_v_phrases = 0;
-  PyObject *__pyx_v_chinese_mega = 0;
-  PyObject *__pyx_v_non_chinese_mega = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_tic = NULL;
-  CYTHON_UNUSED PyObject *__pyx_v_toc = NULL;
-  PyObject *__pyx_v_pool = NULL;
-  PyObject *__pyx_v_final_phrases = 0;
-  PyObject *__pyx_v_final = 0;
-  PyObject *__pyx_v_final_sorted = NULL;
+  PyObject *__pyx_v_phrases = NULL;
+  PyObject *__pyx_v_tic = NULL;
+  PyObject *__pyx_v_toc = NULL;
   PyObject *__pyx_v_grouped_phrases = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -5877,53 +3120,21 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
   PyObject *__pyx_t_2 = NULL;
   PyObject *__pyx_t_3 = NULL;
   PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  Py_ssize_t __pyx_t_6;
+  Py_UCS4 __pyx_t_7;
   __Pyx_RefNannySetupContext("add_pinyin", 0);
 
-  /* "add_pinyin.pyx":232
+  /* "add_pinyin.pyx":97
+ * cpdef str add_pinyin(str text):
  * 
- * cpdef str add_pinyin(str text):
- * 	cdef list text_list = list(text)             # <<<<<<<<<<<<<<
- * 	cdef int i = 0
- * 	cdef str phrase_text
+ * 	phrases = pd.DataFrame()             # <<<<<<<<<<<<<<
+ * 	phrases['chn'] = list(text)
+ * 
  */
-  __pyx_t_1 = PySequence_List(__pyx_v_text); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 232, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_text_list = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":233
- * cpdef str add_pinyin(str text):
- * 	cdef list text_list = list(text)
- * 	cdef int i = 0             # <<<<<<<<<<<<<<
- * 	cdef str phrase_text
- * 	cdef list phrases = []
- */
-  __pyx_v_i = 0;
-
-  /* "add_pinyin.pyx":235
- * 	cdef int i = 0
- * 	cdef str phrase_text
- * 	cdef list phrases = []             # <<<<<<<<<<<<<<
- * 	cdef list chinese_mega
- * 	cdef list non_chinese_mega
- */
-  __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 235, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_phrases = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":238
- * 	cdef list chinese_mega
- * 	cdef list non_chinese_mega
- * 	tic = time.perf_counter()             # <<<<<<<<<<<<<<
- * 	chinese_mega, non_chinese_mega  = parse_phrases(text_list)
- * 	#print(chinese_mega[0], non_chinese_mega[0])
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 238, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_pd); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 97, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 238, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_DataFrame); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 97, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -5937,131 +3148,76 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
     }
   }
   if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 238, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 97, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 238, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 97, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_v_phrases = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":98
+ * 
+ * 	phrases = pd.DataFrame()
+ * 	phrases['chn'] = list(text)             # <<<<<<<<<<<<<<
+ * 
+ * 	## parsing
+ */
+  __pyx_t_1 = PySequence_List(__pyx_v_text); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(PyObject_SetItem(__pyx_v_phrases, __pyx_n_u_chn, __pyx_t_1) < 0)) __PYX_ERR(0, 98, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":101
+ * 
+ * 	## parsing
+ * 	tic = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	phrases['ispinyin'] = phrases.chn.apply(is_chinese_char)
+ * 	phrases['pin'] = phrases.chn.apply(apply_pinyin)
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 101, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 101, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (__pyx_t_3) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 101, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 101, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_tic = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":239
- * 	cdef list non_chinese_mega
+  /* "add_pinyin.pyx":102
+ * 	## parsing
  * 	tic = time.perf_counter()
- * 	chinese_mega, non_chinese_mega  = parse_phrases(text_list)             # <<<<<<<<<<<<<<
- * 	#print(chinese_mega[0], non_chinese_mega[0])
+ * 	phrases['ispinyin'] = phrases.chn.apply(is_chinese_char)             # <<<<<<<<<<<<<<
+ * 	phrases['pin'] = phrases.chn.apply(apply_pinyin)
  * 	toc = time.perf_counter()
  */
-  __pyx_t_1 = __pyx_f_10add_pinyin_parse_phrases(__pyx_v_text_list, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (likely(__pyx_t_1 != Py_None)) {
-    PyObject* sequence = __pyx_t_1;
-    Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
-    if (unlikely(size != 2)) {
-      if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-      else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-      __PYX_ERR(0, 239, __pyx_L1_error)
-    }
-    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_3 = PyTuple_GET_ITEM(sequence, 0); 
-    __pyx_t_2 = PyTuple_GET_ITEM(sequence, 1); 
-    __Pyx_INCREF(__pyx_t_3);
-    __Pyx_INCREF(__pyx_t_2);
-    #else
-    __pyx_t_3 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    #endif
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  } else {
-    __Pyx_RaiseNoneNotIterableError(); __PYX_ERR(0, 239, __pyx_L1_error)
-  }
-  if (!(likely(PyList_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(0, 239, __pyx_L1_error)
-  if (!(likely(PyList_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(0, 239, __pyx_L1_error)
-  __pyx_v_chinese_mega = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
-  __pyx_v_non_chinese_mega = ((PyObject*)__pyx_t_2);
-  __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":241
- * 	chinese_mega, non_chinese_mega  = parse_phrases(text_list)
- * 	#print(chinese_mega[0], non_chinese_mega[0])
- * 	toc = time.perf_counter()             # <<<<<<<<<<<<<<
- * 	#print(f"stretched width in {toc - tic:0.4f} seconds")
- * 	pool = ThreadPool()
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_chn); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_apply); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 241, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 241, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_toc = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":243
- * 	toc = time.perf_counter()
- * 	#print(f"stretched width in {toc - tic:0.4f} seconds")
- * 	pool = ThreadPool()             # <<<<<<<<<<<<<<
- * 	cdef list final_phrases = pool.map(process_phrase, chinese_mega)
- * 
- */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ThreadPool); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 243, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
-    }
-  }
-  if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 243, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 243, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_v_pool = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":244
- * 	#print(f"stretched width in {toc - tic:0.4f} seconds")
- * 	pool = ThreadPool()
- * 	cdef list final_phrases = pool.map(process_phrase, chinese_mega)             # <<<<<<<<<<<<<<
- * 
- * 	#final_phrases = pool.map(strip_tuple, final_phrases)
- */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_map); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_process_phrase); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_is_chinese_char); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
-  __pyx_t_5 = 0;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
     __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
     if (likely(__pyx_t_4)) {
@@ -6069,320 +3225,528 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
       __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_5 = 1;
     }
   }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_2, __pyx_v_chinese_mega};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 244, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
+  if (!__pyx_t_4) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_2, __pyx_v_chinese_mega};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 244, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  } else
-  #endif
-  {
-    __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 244, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    if (__pyx_t_4) {
-      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_2);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
+      __pyx_t_2 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
-    __Pyx_GIVEREF(__pyx_t_2);
-    PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_t_2);
-    __Pyx_INCREF(__pyx_v_chinese_mega);
-    __Pyx_GIVEREF(__pyx_v_chinese_mega);
-    PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_chinese_mega);
-    __pyx_t_2 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 244, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 244, __pyx_L1_error)
-  __pyx_v_final_phrases = ((PyObject*)__pyx_t_1);
+  if (unlikely(PyObject_SetItem(__pyx_v_phrases, __pyx_n_u_ispinyin, __pyx_t_1) < 0)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":103
+ * 	tic = time.perf_counter()
+ * 	phrases['ispinyin'] = phrases.chn.apply(is_chinese_char)
+ * 	phrases['pin'] = phrases.chn.apply(apply_pinyin)             # <<<<<<<<<<<<<<
+ * 	toc = time.perf_counter()
+ * 	print(f"\n{'-'*50}\nparsed phrases in {toc - tic:0.4f} seconds")
+ */
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_chn); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_apply); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_apply_pinyin); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
+    }
+  }
+  if (!__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_4);
+      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_3);
+      __pyx_t_3 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (unlikely(PyObject_SetItem(__pyx_v_phrases, __pyx_n_u_pin, __pyx_t_1) < 0)) __PYX_ERR(0, 103, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":104
+ * 	phrases['ispinyin'] = phrases.chn.apply(is_chinese_char)
+ * 	phrases['pin'] = phrases.chn.apply(apply_pinyin)
+ * 	toc = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	print(f"\n{'-'*50}\nparsed phrases in {toc - tic:0.4f} seconds")
+ * 
+ */
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 104, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  if (__pyx_t_5) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 104, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_v_toc = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":247
+  /* "add_pinyin.pyx":105
+ * 	phrases['pin'] = phrases.chn.apply(apply_pinyin)
+ * 	toc = time.perf_counter()
+ * 	print(f"\n{'-'*50}\nparsed phrases in {toc - tic:0.4f} seconds")             # <<<<<<<<<<<<<<
  * 
- * 	#final_phrases = pool.map(strip_tuple, final_phrases)
- * 	non_chinese_mega = pool.map(strip_extra_col, non_chinese_mega)             # <<<<<<<<<<<<<<
- * 
- * 	#print('final_phrases: ', final_phrases)
+ * 	## stretching width
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_map); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 247, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_strip_extra_col); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 247, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_2 = NULL;
+  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_6 = 0;
+  __pyx_t_7 = 127;
+  __Pyx_INCREF(__pyx_kp_u_parsed_phrases_in);
+  __pyx_t_6 += 70;
+  __Pyx_GIVEREF(__pyx_kp_u_parsed_phrases_in);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_kp_u_parsed_phrases_in);
+  __pyx_t_4 = PyNumber_Subtract(__pyx_v_toc, __pyx_v_tic); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_Format(__pyx_t_4, __pyx_kp_u_0_4f); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_7 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_5) > __pyx_t_7) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_5) : __pyx_t_7;
+  __pyx_t_6 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_5);
+  __Pyx_GIVEREF(__pyx_t_5);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_5);
   __pyx_t_5 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
+  __Pyx_INCREF(__pyx_kp_u_seconds);
+  __pyx_t_6 += 8;
+  __Pyx_GIVEREF(__pyx_kp_u_seconds);
+  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_kp_u_seconds);
+  __pyx_t_5 = __Pyx_PyUnicode_Join(__pyx_t_1, 3, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":108
+ * 
+ * 	## stretching width
+ * 	tic = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	phrases.pin[phrases.ispinyin] = phrases.pin[phrases.ispinyin].apply(stretch_width_english_text)
+ * 	toc = time.perf_counter()
+ */
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_4, function);
+    }
+  }
+  if (__pyx_t_5) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF_SET(__pyx_v_tic, __pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":109
+ * 	## stretching width
+ * 	tic = time.perf_counter()
+ * 	phrases.pin[phrases.ispinyin] = phrases.pin[phrases.ispinyin].apply(stretch_width_english_text)             # <<<<<<<<<<<<<<
+ * 	toc = time.perf_counter()
+ * 	print(f"stretched phrases in {toc - tic:0.4f} seconds")
+ */
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_pin); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_ispinyin); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_3 = __Pyx_PyObject_GetItem(__pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_apply); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_stretch_width_english_text); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
+    }
+  }
+  if (!__pyx_t_4) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 109, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
+      __pyx_t_3 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_pin); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_phrases, __pyx_n_s_ispinyin); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (unlikely(PyObject_SetItem(__pyx_t_5, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":110
+ * 	tic = time.perf_counter()
+ * 	phrases.pin[phrases.ispinyin] = phrases.pin[phrases.ispinyin].apply(stretch_width_english_text)
+ * 	toc = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	print(f"stretched phrases in {toc - tic:0.4f} seconds")
+ * 
+ */
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 110, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
+    }
+  }
+  if (__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF_SET(__pyx_v_toc, __pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":111
+ * 	phrases.pin[phrases.ispinyin] = phrases.pin[phrases.ispinyin].apply(stretch_width_english_text)
+ * 	toc = time.perf_counter()
+ * 	print(f"stretched phrases in {toc - tic:0.4f} seconds")             # <<<<<<<<<<<<<<
+ * 
+ * 	## grouping phrases together
+ */
+  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_6 = 0;
+  __pyx_t_7 = 127;
+  __Pyx_INCREF(__pyx_kp_u_stretched_phrases_in);
+  __pyx_t_6 += 21;
+  __Pyx_GIVEREF(__pyx_kp_u_stretched_phrases_in);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_kp_u_stretched_phrases_in);
+  __pyx_t_5 = PyNumber_Subtract(__pyx_v_toc, __pyx_v_tic); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_2 = __Pyx_PyObject_Format(__pyx_t_5, __pyx_kp_u_0_4f); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_7 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_7) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_7;
+  __pyx_t_6 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u_seconds);
+  __pyx_t_6 += 8;
+  __Pyx_GIVEREF(__pyx_kp_u_seconds);
+  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_kp_u_seconds);
+  __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_1, 3, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 111, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":114
+ * 
+ * 	## grouping phrases together
+ * 	tic = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	cdef str grouped_phrases = group_and_format(list(np.array(phrases)))
+ * 	toc = time.perf_counter()
+ */
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
+    }
+  }
+  if (__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
+  }
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __Pyx_DECREF_SET(__pyx_v_tic, __pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":115
+ * 	## grouping phrases together
+ * 	tic = time.perf_counter()
+ * 	cdef str grouped_phrases = group_and_format(list(np.array(phrases)))             # <<<<<<<<<<<<<<
+ * 	toc = time.perf_counter()
+ * 	print(f"grouped phrases in {toc - tic:0.4f} seconds\n{'-'*50}\n")
+ */
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_array); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_5) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_phrases); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_phrases};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_phrases};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_phrases);
+      __Pyx_GIVEREF(__pyx_v_phrases);
+      PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_phrases);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = PySequence_List(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __pyx_f_10add_pinyin_group_and_format(((PyObject*)__pyx_t_2), 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_grouped_phrases = ((PyObject*)__pyx_t_1);
+  __pyx_t_1 = 0;
+
+  /* "add_pinyin.pyx":116
+ * 	tic = time.perf_counter()
+ * 	cdef str grouped_phrases = group_and_format(list(np.array(phrases)))
+ * 	toc = time.perf_counter()             # <<<<<<<<<<<<<<
+ * 	print(f"grouped phrases in {toc - tic:0.4f} seconds\n{'-'*50}\n")
+ * 
+ */
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 116, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_perf_counter); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 116, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
     __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
     if (likely(__pyx_t_2)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
       __Pyx_INCREF(__pyx_t_2);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_3, function);
-      __pyx_t_5 = 1;
     }
   }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_t_6, __pyx_v_non_chinese_mega};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 247, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_t_6, __pyx_v_non_chinese_mega};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 247, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  } else
-  #endif
-  {
-    __pyx_t_4 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 247, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    if (__pyx_t_2) {
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
-    }
-    __Pyx_GIVEREF(__pyx_t_6);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_5, __pyx_t_6);
-    __Pyx_INCREF(__pyx_v_non_chinese_mega);
-    __Pyx_GIVEREF(__pyx_v_non_chinese_mega);
-    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_5, __pyx_v_non_chinese_mega);
-    __pyx_t_6 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 247, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (__pyx_t_2) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  } else {
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
   }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(PyList_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 247, __pyx_L1_error)
-  __Pyx_DECREF_SET(__pyx_v_non_chinese_mega, ((PyObject*)__pyx_t_1));
-  __pyx_t_1 = 0;
-
-  /* "add_pinyin.pyx":251
- * 	#print('final_phrases: ', final_phrases)
- * 
- * 	cdef list final = final_phrases + non_chinese_mega             # <<<<<<<<<<<<<<
- * 	#print('type of final: ', final_phrases[0], type(final_phrases), np.array(final_phrases).shape)
- * 	#print('type of final: ', non_chinese_mega[0], type(non_chinese_mega), np.array(non_chinese_mega).shape)
- */
-  __pyx_t_1 = PyNumber_Add(__pyx_v_final_phrases, __pyx_v_non_chinese_mega); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 251, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_final = ((PyObject*)__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF_SET(__pyx_v_toc, __pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":256
+  /* "add_pinyin.pyx":117
+ * 	cdef str grouped_phrases = group_and_format(list(np.array(phrases)))
+ * 	toc = time.perf_counter()
+ * 	print(f"grouped phrases in {toc - tic:0.4f} seconds\n{'-'*50}\n")             # <<<<<<<<<<<<<<
  * 
- * 	#print('type of final: ', final[0], type(final), np.array(final).shape)
- * 	final_sorted = pd.DataFrame(final).sort_values(by=[2])             # <<<<<<<<<<<<<<
- * 	#print(final_sorted.head())
- * 	#print(np.array(final_sorted).shape)
+ * 	return grouped_phrases
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pd); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 256, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_6 = 0;
+  __pyx_t_7 = 127;
+  __Pyx_INCREF(__pyx_kp_u_grouped_phrases_in);
+  __pyx_t_6 += 19;
+  __Pyx_GIVEREF(__pyx_kp_u_grouped_phrases_in);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_kp_u_grouped_phrases_in);
+  __pyx_t_3 = PyNumber_Subtract(__pyx_v_toc, __pyx_v_tic); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_DataFrame); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 256, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_Format(__pyx_t_3, __pyx_kp_u_0_4f); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 117, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_final); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 256, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_final};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 256, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_final};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 256, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_1);
-    } else
-    #endif
-    {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 256, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3); __pyx_t_3 = NULL;
-      __Pyx_INCREF(__pyx_v_final);
-      __Pyx_GIVEREF(__pyx_v_final);
-      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_final);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 256, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sort_values); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 256, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_7 = (__Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) > __pyx_t_7) ? __Pyx_PyUnicode_MAX_CHAR_VALUE(__pyx_t_2) : __pyx_t_7;
+  __pyx_t_6 += __Pyx_PyUnicode_GET_LENGTH(__pyx_t_2);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __Pyx_INCREF(__pyx_kp_u_seconds_2);
+  __pyx_t_6 += 60;
+  __Pyx_GIVEREF(__pyx_kp_u_seconds_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_kp_u_seconds_2);
+  __pyx_t_2 = __Pyx_PyUnicode_Join(__pyx_t_1, 3, __pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 117, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 256, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = PyList_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 256, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_INCREF(__pyx_int_2);
-  __Pyx_GIVEREF(__pyx_int_2);
-  PyList_SET_ITEM(__pyx_t_6, 0, __pyx_int_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_by, __pyx_t_6) < 0) __PYX_ERR(0, 256, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 256, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_final_sorted = __pyx_t_6;
-  __pyx_t_6 = 0;
 
-  /* "add_pinyin.pyx":259
- * 	#print(final_sorted.head())
- * 	#print(np.array(final_sorted).shape)
- * 	cdef str grouped_phrases = group_and_format(list(np.array(final_sorted)))             # <<<<<<<<<<<<<<
+  /* "add_pinyin.pyx":119
+ * 	print(f"grouped phrases in {toc - tic:0.4f} seconds\n{'-'*50}\n")
  * 
- * 	pool.close()
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_array); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_1)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_1);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (!__pyx_t_1) {
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_final_sorted); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_final_sorted};
-      __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 259, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_final_sorted};
-      __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 259, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-    } else
-    #endif
-    {
-      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 259, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
-      __Pyx_INCREF(__pyx_v_final_sorted);
-      __Pyx_GIVEREF(__pyx_v_final_sorted);
-      PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_final_sorted);
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 259, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PySequence_List(__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __pyx_f_10add_pinyin_group_and_format(((PyObject*)__pyx_t_4), 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_v_grouped_phrases = ((PyObject*)__pyx_t_6);
-  __pyx_t_6 = 0;
-
-  /* "add_pinyin.pyx":261
- * 	cdef str grouped_phrases = group_and_format(list(np.array(final_sorted)))
- * 
- * 	pool.close()             # <<<<<<<<<<<<<<
- * 	pool.join()
- * 	return grouped_phrases
- */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_close); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 261, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (__pyx_t_3) {
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 261, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  } else {
-    __pyx_t_6 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 261, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-
-  /* "add_pinyin.pyx":262
- * 
- * 	pool.close()
- * 	pool.join()             # <<<<<<<<<<<<<<
- * 	return grouped_phrases
- */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_pool, __pyx_n_s_join); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 262, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_4);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_4, function);
-    }
-  }
-  if (__pyx_t_3) {
-    __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 262, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  } else {
-    __pyx_t_6 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 262, __pyx_L1_error)
-  }
-  __Pyx_GOTREF(__pyx_t_6);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-
-  /* "add_pinyin.pyx":263
- * 	pool.close()
- * 	pool.join()
  * 	return grouped_phrases             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
@@ -6390,12 +3754,12 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
   __pyx_r = __pyx_v_grouped_phrases;
   goto __pyx_L0;
 
-  /* "add_pinyin.pyx":231
+  /* "add_pinyin.pyx":95
  * 
  * 
  * cpdef str add_pinyin(str text):             # <<<<<<<<<<<<<<
- * 	cdef list text_list = list(text)
- * 	cdef int i = 0
+ * 
+ * 	phrases = pd.DataFrame()
  */
 
   /* function exit code */
@@ -6404,20 +3768,13 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_5);
   __Pyx_AddTraceback("add_pinyin.add_pinyin", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_text_list);
   __Pyx_XDECREF(__pyx_v_phrases);
-  __Pyx_XDECREF(__pyx_v_chinese_mega);
-  __Pyx_XDECREF(__pyx_v_non_chinese_mega);
   __Pyx_XDECREF(__pyx_v_tic);
   __Pyx_XDECREF(__pyx_v_toc);
-  __Pyx_XDECREF(__pyx_v_pool);
-  __Pyx_XDECREF(__pyx_v_final_phrases);
-  __Pyx_XDECREF(__pyx_v_final);
-  __Pyx_XDECREF(__pyx_v_final_sorted);
   __Pyx_XDECREF(__pyx_v_grouped_phrases);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -6425,13 +3782,13 @@ static PyObject *__pyx_f_10add_pinyin_add_pinyin(PyObject *__pyx_v_text, CYTHON_
 }
 
 /* Python wrapper */
-static PyObject *__pyx_pw_10add_pinyin_41add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-static PyObject *__pyx_pw_10add_pinyin_41add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text) {
+static PyObject *__pyx_pw_10add_pinyin_17add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
+static PyObject *__pyx_pw_10add_pinyin_17add_pinyin(PyObject *__pyx_self, PyObject *__pyx_v_text) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("add_pinyin (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text), (&PyString_Type), 1, "text", 1))) __PYX_ERR(0, 231, __pyx_L1_error)
-  __pyx_r = __pyx_pf_10add_pinyin_40add_pinyin(__pyx_self, ((PyObject*)__pyx_v_text));
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text), (&PyUnicode_Type), 1, "text", 1))) __PYX_ERR(0, 95, __pyx_L1_error)
+  __pyx_r = __pyx_pf_10add_pinyin_16add_pinyin(__pyx_self, ((PyObject*)__pyx_v_text));
 
   /* function exit code */
   goto __pyx_L0;
@@ -6442,13 +3799,13 @@ static PyObject *__pyx_pw_10add_pinyin_41add_pinyin(PyObject *__pyx_self, PyObje
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_10add_pinyin_40add_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
+static PyObject *__pyx_pf_10add_pinyin_16add_pinyin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("add_pinyin", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_10add_pinyin_add_pinyin(__pyx_v_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 231, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_10add_pinyin_add_pinyin(__pyx_v_text, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -6466,27 +3823,15 @@ static PyObject *__pyx_pf_10add_pinyin_40add_pinyin(CYTHON_UNUSED PyObject *__py
 }
 
 static PyMethodDef __pyx_methods[] = {
-  {"calculate_width_chinese", (PyCFunction)__pyx_pw_10add_pinyin_1calculate_width_chinese, METH_O, 0},
-  {"calculate_num_spaces", (PyCFunction)__pyx_pw_10add_pinyin_3calculate_num_spaces, METH_O, 0},
-  {"stretch_char_space_old", (PyCFunction)__pyx_pw_10add_pinyin_5stretch_char_space_old, METH_VARARGS|METH_KEYWORDS, 0},
-  {"stretch_char_space", (PyCFunction)__pyx_pw_10add_pinyin_7stretch_char_space, METH_VARARGS|METH_KEYWORDS, 0},
-  {"stretch_width_english_text_old", (PyCFunction)__pyx_pw_10add_pinyin_9stretch_width_english_text_old, METH_VARARGS|METH_KEYWORDS, 0},
-  {"process_phrase_old", (PyCFunction)__pyx_pw_10add_pinyin_11process_phrase_old, METH_VARARGS|METH_KEYWORDS, 0},
-  {"stretch_width_english_text", (PyCFunction)__pyx_pw_10add_pinyin_13stretch_width_english_text, METH_VARARGS|METH_KEYWORDS, 0},
-  {"unzip", (PyCFunction)__pyx_pw_10add_pinyin_15unzip, METH_O, 0},
-  {"process_phrase", (PyCFunction)__pyx_pw_10add_pinyin_17process_phrase, METH_O, 0},
-  {"is_chinese_char", (PyCFunction)__pyx_pw_10add_pinyin_19is_chinese_char, METH_O, 0},
-  {"sort_key_true", (PyCFunction)__pyx_pw_10add_pinyin_21sort_key_true, METH_O, 0},
-  {"sort_key_false", (PyCFunction)__pyx_pw_10add_pinyin_23sort_key_false, METH_O, 0},
-  {"filter_newline", (PyCFunction)__pyx_pw_10add_pinyin_25filter_newline, METH_O, 0},
-  {"split_mega", (PyCFunction)__pyx_pw_10add_pinyin_27split_mega, METH_O, 0},
-  {"parse_phrases", (PyCFunction)__pyx_pw_10add_pinyin_29parse_phrases, METH_O, 0},
-  {"add_span", (PyCFunction)__pyx_pw_10add_pinyin_31add_span, METH_O, 0},
-  {"strip_tuple", (PyCFunction)__pyx_pw_10add_pinyin_33strip_tuple, METH_O, 0},
-  {"strip_extra_col", (PyCFunction)__pyx_pw_10add_pinyin_35strip_extra_col, METH_O, 0},
-  {"process_mini_phrase", (PyCFunction)__pyx_pw_10add_pinyin_37process_mini_phrase, METH_O, 0},
-  {"group_and_format", (PyCFunction)__pyx_pw_10add_pinyin_39group_and_format, METH_O, 0},
-  {"add_pinyin", (PyCFunction)__pyx_pw_10add_pinyin_41add_pinyin, METH_O, 0},
+  {"stretch_width_english_text", (PyCFunction)__pyx_pw_10add_pinyin_1stretch_width_english_text, METH_O, 0},
+  {"is_chinese_char", (PyCFunction)__pyx_pw_10add_pinyin_3is_chinese_char, METH_O, 0},
+  {"filter_newline", (PyCFunction)__pyx_pw_10add_pinyin_5filter_newline, METH_O, 0},
+  {"split_phrases", (PyCFunction)__pyx_pw_10add_pinyin_7split_phrases, METH_O, 0},
+  {"add_span", (PyCFunction)__pyx_pw_10add_pinyin_9add_span, METH_O, 0},
+  {"group_phrases", (PyCFunction)__pyx_pw_10add_pinyin_11group_phrases, METH_O, 0},
+  {"group_and_format", (PyCFunction)__pyx_pw_10add_pinyin_13group_and_format, METH_O, 0},
+  {"apply_pinyin", (PyCFunction)__pyx_pw_10add_pinyin_15apply_pinyin, METH_O, 0},
+  {"add_pinyin", (PyCFunction)__pyx_pw_10add_pinyin_17add_pinyin, METH_O, 0},
   {0, 0, 0, 0}
 };
 
@@ -6523,86 +3868,84 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_s_utf_, __pyx_k_, sizeof(__pyx_k_), "utf-", 0, 1, 0},
-  {&__pyx_kp_s_utf_153_0_17, __pyx_k_153_0_17, sizeof(__pyx_k_153_0_17), "utf-", 0, 1, 0},
+  {&__pyx_kp_u_, __pyx_k_, sizeof(__pyx_k_), 0, 1, 0, 0},
+  {&__pyx_kp_u_0_4f, __pyx_k_0_4f, sizeof(__pyx_k_0_4f), 0, 1, 0, 0},
+  {&__pyx_kp_u_153_0_17, __pyx_k_153_0_17, sizeof(__pyx_k_153_0_17), 0, 1, 0, 0},
   {&__pyx_n_s_DataFrame, __pyx_k_DataFrame, sizeof(__pyx_k_DataFrame), 0, 0, 1, 1},
   {&__pyx_n_s_ImageFont, __pyx_k_ImageFont, sizeof(__pyx_k_ImageFont), 0, 0, 1, 1},
   {&__pyx_n_s_PIL, __pyx_k_PIL, sizeof(__pyx_k_PIL), 0, 0, 1, 1},
   {&__pyx_n_s_Pool, __pyx_k_Pool, sizeof(__pyx_k_Pool), 0, 0, 1, 1},
   {&__pyx_n_s_ThreadPool, __pyx_k_ThreadPool, sizeof(__pyx_k_ThreadPool), 0, 0, 1, 1},
-  {&__pyx_kp_s_utf__2, __pyx_k__2, sizeof(__pyx_k__2), "utf-", 0, 1, 0},
-  {&__pyx_kp_s_utf__3, __pyx_k__3, sizeof(__pyx_k__3), "utf-", 0, 1, 0},
-  {&__pyx_kp_s_utf__4, __pyx_k__4, sizeof(__pyx_k__4), "utf-", 0, 1, 0},
+  {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
+  {&__pyx_kp_u__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 1, 0, 0},
+  {&__pyx_n_u__5, __pyx_k__5, sizeof(__pyx_k__5), 0, 1, 0, 1},
   {&__pyx_n_s_abspath, __pyx_k_abspath, sizeof(__pyx_k_abspath), 0, 0, 1, 1},
+  {&__pyx_n_s_apply, __pyx_k_apply, sizeof(__pyx_k_apply), 0, 0, 1, 1},
+  {&__pyx_n_s_apply_pinyin, __pyx_k_apply_pinyin, sizeof(__pyx_k_apply_pinyin), 0, 0, 1, 1},
   {&__pyx_n_s_argv, __pyx_k_argv, sizeof(__pyx_k_argv), 0, 0, 1, 1},
   {&__pyx_n_s_array, __pyx_k_array, sizeof(__pyx_k_array), 0, 0, 1, 1},
   {&__pyx_n_s_base_font_size, __pyx_k_base_font_size, sizeof(__pyx_k_base_font_size), 0, 0, 1, 1},
-  {&__pyx_kp_s_utf_br, __pyx_k_br, sizeof(__pyx_k_br), "utf-", 0, 1, 0},
-  {&__pyx_n_s_by, __pyx_k_by, sizeof(__pyx_k_by), 0, 0, 1, 1},
+  {&__pyx_kp_u_br, __pyx_k_br, sizeof(__pyx_k_br), 0, 1, 0, 0},
   {&__pyx_n_s_chinese_font, __pyx_k_chinese_font, sizeof(__pyx_k_chinese_font), 0, 0, 1, 1},
-  {&__pyx_n_s_chinese_preceding_width, __pyx_k_chinese_preceding_width, sizeof(__pyx_k_chinese_preceding_width), 0, 0, 1, 1},
-  {&__pyx_n_s_chinese_text, __pyx_k_chinese_text, sizeof(__pyx_k_chinese_text), 0, 0, 1, 1},
+  {&__pyx_n_s_chn, __pyx_k_chn, sizeof(__pyx_k_chn), 0, 0, 1, 1},
+  {&__pyx_n_u_chn, __pyx_k_chn, sizeof(__pyx_k_chn), 0, 1, 0, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_close, __pyx_k_close, sizeof(__pyx_k_close), 0, 0, 1, 1},
   {&__pyx_n_s_csv, __pyx_k_csv, sizeof(__pyx_k_csv), 0, 0, 1, 1},
   {&__pyx_n_s_dir_path, __pyx_k_dir_path, sizeof(__pyx_k_dir_path), 0, 0, 1, 1},
   {&__pyx_n_s_dirname, __pyx_k_dirname, sizeof(__pyx_k_dirname), 0, 0, 1, 1},
-  {&__pyx_n_s_end, __pyx_k_end, sizeof(__pyx_k_end), 0, 0, 1, 1},
   {&__pyx_n_s_english_scaling, __pyx_k_english_scaling, sizeof(__pyx_k_english_scaling), 0, 0, 1, 1},
   {&__pyx_n_s_exceptions, __pyx_k_exceptions, sizeof(__pyx_k_exceptions), 0, 0, 1, 1},
-  {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
-  {&__pyx_n_s_filter, __pyx_k_filter, sizeof(__pyx_k_filter), 0, 0, 1, 1},
-  {&__pyx_n_s_filter_newline, __pyx_k_filter_newline, sizeof(__pyx_k_filter_newline), 0, 0, 1, 1},
   {&__pyx_n_s_font, __pyx_k_font, sizeof(__pyx_k_font), 0, 0, 1, 1},
-  {&__pyx_kp_s_utf_fonts_NotoSansCJK_Regular_ttc, __pyx_k_fonts_NotoSansCJK_Regular_ttc, sizeof(__pyx_k_fonts_NotoSansCJK_Regular_ttc), "utf-", 0, 1, 0},
-  {&__pyx_kp_s_utf_fonts_Times_New_Roman_ttf, __pyx_k_fonts_Times_New_Roman_ttf, sizeof(__pyx_k_fonts_Times_New_Roman_ttf), "utf-", 0, 1, 0},
+  {&__pyx_kp_u_fonts_NotoSansCJK_Regular_ttc, __pyx_k_fonts_NotoSansCJK_Regular_ttc, sizeof(__pyx_k_fonts_NotoSansCJK_Regular_ttc), 0, 1, 0, 0},
+  {&__pyx_kp_u_fonts_UbuntuMono_R_ttf, __pyx_k_fonts_UbuntuMono_R_ttf, sizeof(__pyx_k_fonts_UbuntuMono_R_ttf), 0, 1, 0, 0},
   {&__pyx_n_s_footer, __pyx_k_footer, sizeof(__pyx_k_footer), 0, 0, 1, 1},
   {&__pyx_n_s_get_script, __pyx_k_get_script, sizeof(__pyx_k_get_script), 0, 0, 1, 1},
   {&__pyx_n_s_get_style, __pyx_k_get_style, sizeof(__pyx_k_get_style), 0, 0, 1, 1},
   {&__pyx_n_s_getsize, __pyx_k_getsize, sizeof(__pyx_k_getsize), 0, 0, 1, 1},
   {&__pyx_n_s_glob, __pyx_k_glob, sizeof(__pyx_k_glob), 0, 0, 1, 1},
+  {&__pyx_n_s_group_phrases, __pyx_k_group_phrases, sizeof(__pyx_k_group_phrases), 0, 0, 1, 1},
   {&__pyx_n_s_groupby, __pyx_k_groupby, sizeof(__pyx_k_groupby), 0, 0, 1, 1},
+  {&__pyx_kp_u_grouped_phrases_in, __pyx_k_grouped_phrases_in, sizeof(__pyx_k_grouped_phrases_in), 0, 1, 0, 0},
   {&__pyx_n_s_header, __pyx_k_header, sizeof(__pyx_k_header), 0, 0, 1, 1},
   {&__pyx_n_s_html_definitions, __pyx_k_html_definitions, sizeof(__pyx_k_html_definitions), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_is_chinese_char, __pyx_k_is_chinese_char, sizeof(__pyx_k_is_chinese_char), 0, 0, 1, 1},
+  {&__pyx_n_s_ispinyin, __pyx_k_ispinyin, sizeof(__pyx_k_ispinyin), 0, 0, 1, 1},
+  {&__pyx_n_u_ispinyin, __pyx_k_ispinyin, sizeof(__pyx_k_ispinyin), 0, 1, 0, 1},
   {&__pyx_n_s_itemgetter, __pyx_k_itemgetter, sizeof(__pyx_k_itemgetter), 0, 0, 1, 1},
   {&__pyx_n_s_itertools, __pyx_k_itertools, sizeof(__pyx_k_itertools), 0, 0, 1, 1},
   {&__pyx_n_s_join, __pyx_k_join, sizeof(__pyx_k_join), 0, 0, 1, 1},
   {&__pyx_n_s_load_phrases_dict, __pyx_k_load_phrases_dict, sizeof(__pyx_k_load_phrases_dict), 0, 0, 1, 1},
+  {&__pyx_n_s_logging, __pyx_k_logging, sizeof(__pyx_k_logging), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_map, __pyx_k_map, sizeof(__pyx_k_map), 0, 0, 1, 1},
   {&__pyx_n_s_math, __pyx_k_math, sizeof(__pyx_k_math), 0, 0, 1, 1},
   {&__pyx_n_s_multiprocessing_dummy, __pyx_k_multiprocessing_dummy, sizeof(__pyx_k_multiprocessing_dummy), 0, 0, 1, 1},
-  {&__pyx_kp_s_utf_nbsp, __pyx_k_nbsp, sizeof(__pyx_k_nbsp), "utf-", 0, 1, 0},
   {&__pyx_n_s_np, __pyx_k_np, sizeof(__pyx_k_np), 0, 0, 1, 1},
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
   {&__pyx_n_s_operator, __pyx_k_operator, sizeof(__pyx_k_operator), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
   {&__pyx_n_s_pandas, __pyx_k_pandas, sizeof(__pyx_k_pandas), 0, 0, 1, 1},
+  {&__pyx_kp_u_parsed_phrases_in, __pyx_k_parsed_phrases_in, sizeof(__pyx_k_parsed_phrases_in), 0, 1, 0, 0},
   {&__pyx_n_s_path, __pyx_k_path, sizeof(__pyx_k_path), 0, 0, 1, 1},
   {&__pyx_n_s_pd, __pyx_k_pd, sizeof(__pyx_k_pd), 0, 0, 1, 1},
   {&__pyx_n_s_perf_counter, __pyx_k_perf_counter, sizeof(__pyx_k_perf_counter), 0, 0, 1, 1},
+  {&__pyx_n_s_pin, __pyx_k_pin, sizeof(__pyx_k_pin), 0, 0, 1, 1},
+  {&__pyx_n_u_pin, __pyx_k_pin, sizeof(__pyx_k_pin), 0, 1, 0, 1},
   {&__pyx_n_s_pink, __pyx_k_pink, sizeof(__pyx_k_pink), 0, 0, 1, 1},
   {&__pyx_n_s_pinyin, __pyx_k_pinyin, sizeof(__pyx_k_pinyin), 0, 0, 1, 1},
   {&__pyx_n_s_pinyin_exceptions, __pyx_k_pinyin_exceptions, sizeof(__pyx_k_pinyin_exceptions), 0, 0, 1, 1},
-  {&__pyx_n_s_pinyin_preceding, __pyx_k_pinyin_preceding, sizeof(__pyx_k_pinyin_preceding), 0, 0, 1, 1},
-  {&__pyx_n_s_pinyin_text, __pyx_k_pinyin_text, sizeof(__pyx_k_pinyin_text), 0, 0, 1, 1},
-  {&__pyx_n_s_pinyin_word, __pyx_k_pinyin_word, sizeof(__pyx_k_pinyin_word), 0, 0, 1, 1},
   {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
-  {&__pyx_n_s_process_phrase, __pyx_k_process_phrase, sizeof(__pyx_k_process_phrase), 0, 0, 1, 1},
   {&__pyx_n_s_pypinyin, __pyx_k_pypinyin, sizeof(__pyx_k_pypinyin), 0, 0, 1, 1},
-  {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_re, __pyx_k_re, sizeof(__pyx_k_re), 0, 0, 1, 1},
   {&__pyx_n_s_round, __pyx_k_round, sizeof(__pyx_k_round), 0, 0, 1, 1},
-  {&__pyx_n_s_sort_key_false, __pyx_k_sort_key_false, sizeof(__pyx_k_sort_key_false), 0, 0, 1, 1},
-  {&__pyx_n_s_sort_key_true, __pyx_k_sort_key_true, sizeof(__pyx_k_sort_key_true), 0, 0, 1, 1},
-  {&__pyx_n_s_sort_values, __pyx_k_sort_values, sizeof(__pyx_k_sort_values), 0, 0, 1, 1},
-  {&__pyx_kp_s_utf_span, __pyx_k_span, sizeof(__pyx_k_span), "utf-", 0, 1, 0},
-  {&__pyx_kp_s_utf_span_class_pinyin_span, __pyx_k_span_class_pinyin_span, sizeof(__pyx_k_span_class_pinyin_span), "utf-", 0, 1, 0},
-  {&__pyx_n_s_split, __pyx_k_split, sizeof(__pyx_k_split), 0, 0, 1, 1},
-  {&__pyx_n_s_strip, __pyx_k_strip, sizeof(__pyx_k_strip), 0, 0, 1, 1},
-  {&__pyx_n_s_strip_extra_col, __pyx_k_strip_extra_col, sizeof(__pyx_k_strip_extra_col), 0, 0, 1, 1},
+  {&__pyx_kp_u_seconds, __pyx_k_seconds, sizeof(__pyx_k_seconds), 0, 1, 0, 0},
+  {&__pyx_kp_u_seconds_2, __pyx_k_seconds_2, sizeof(__pyx_k_seconds_2), 0, 1, 0, 0},
+  {&__pyx_kp_u_span, __pyx_k_span, sizeof(__pyx_k_span), 0, 1, 0, 0},
+  {&__pyx_kp_u_span_class_pinyin_span, __pyx_k_span_class_pinyin_span, sizeof(__pyx_k_span_class_pinyin_span), 0, 1, 0, 0},
+  {&__pyx_n_s_stretch_width_english_text, __pyx_k_stretch_width_english_text, sizeof(__pyx_k_stretch_width_english_text), 0, 0, 1, 1},
+  {&__pyx_kp_u_stretched_phrases_in, __pyx_k_stretched_phrases_in, sizeof(__pyx_k_stretched_phrases_in), 0, 1, 0, 0},
   {&__pyx_n_s_sub, __pyx_k_sub, sizeof(__pyx_k_sub), 0, 0, 1, 1},
   {&__pyx_n_s_sys, __pyx_k_sys, sizeof(__pyx_k_sys), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
@@ -6612,10 +3955,9 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_round = __Pyx_GetBuiltinName(__pyx_n_s_round); if (!__pyx_builtin_round) __PYX_ERR(0, 20, __pyx_L1_error)
-  __pyx_builtin_filter = __Pyx_GetBuiltinName(__pyx_n_s_filter); if (!__pyx_builtin_filter) __PYX_ERR(0, 38, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 108, __pyx_L1_error)
-  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 137, __pyx_L1_error)
+  __pyx_builtin_round = __Pyx_GetBuiltinName(__pyx_n_s_round); if (!__pyx_builtin_round) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 74, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -6625,60 +3967,38 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "add_pinyin.pyx":170
- * 	#print(len(mega), mega[0])
- * 	#print(len(mega[1]))
- * 	for k, g in groupby(mega, itemgetter(3)):             # <<<<<<<<<<<<<<
+  /* "add_pinyin.pyx":62
+ * cpdef list split_phrases(list phrase):
+ * 	cdef list grouped_phrase = []
+ * 	for k, g in groupby(phrase, itemgetter(2)):             # <<<<<<<<<<<<<<
  * 		#print("list",list(g),"key",k)
- * 		grouped_mega.append(list(g))
+ * 		grouped_phrase.append(list(g))
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_int_3); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 170, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__5);
-  __Pyx_GIVEREF(__pyx_tuple__5);
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_int_2); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 62, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__3);
+  __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "add_pinyin.pyx":223
- * 		#print("phrase" + str(phrase) + "\nphrase[:]" + str(phrase[:,0]) + "\nphrase[1]" + str(phrase[:,1]) + str(np.array(phrase).shape))
- * 		elif len(phrase) > 12:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))             # <<<<<<<<<<<<<<
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))
- * 		else:
- */
-  __pyx_slice__6 = PySlice_New(Py_None, __pyx_int_12, Py_None); if (unlikely(!__pyx_slice__6)) __PYX_ERR(0, 223, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__6);
-  __Pyx_GIVEREF(__pyx_slice__6);
-
-  /* "add_pinyin.pyx":224
- * 		elif len(phrase) > 12:
- * 			final_phrase += add_span(process_mini_phrase(phrase[:12]))
- * 			final_phrase += add_span(process_mini_phrase(phrase[12:]))             # <<<<<<<<<<<<<<
- * 		else:
- * 			final_phrase += add_span(process_mini_phrase(phrase))
- */
-  __pyx_slice__7 = PySlice_New(__pyx_int_12, Py_None, Py_None); if (unlikely(!__pyx_slice__7)) __PYX_ERR(0, 224, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_slice__7);
-  __Pyx_GIVEREF(__pyx_slice__7);
-
-  /* "add_pinyin.pyx":20
- * import math
- * load_phrases_dict(pinyin_exceptions)
- * base_font_size = round(40 / 12)*12 #36             # <<<<<<<<<<<<<<
- * english_scaling = 0.4 #14
- * pink = '153, 0, 17'
- */
-  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_int_3); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 20, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__8);
-  __Pyx_GIVEREF(__pyx_tuple__8);
-
-  /* "add_pinyin.pyx":31
+  /* "add_pinyin.pyx":39
+ * font = ImageFont.truetype(dir_path + "/fonts/UbuntuMono-R.ttf", 100)
  * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
+ * cdef int chinese_width = chinese_font.getsize("")[0]             # <<<<<<<<<<<<<<
+ * cdef int char_width = font.getsize(" ")[0]
  * 
- * cdef int space_width = font.getsize(" ")[0]             # <<<<<<<<<<<<<<
- * 
- * cpdef int calculate_width_chinese(str text):
  */
-  __pyx_tuple__9 = PyTuple_Pack(1, __pyx_kp_s_utf_); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__9);
-  __Pyx_GIVEREF(__pyx_tuple__9);
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_n_u__5); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__6);
+  __Pyx_GIVEREF(__pyx_tuple__6);
+
+  /* "add_pinyin.pyx":40
+ * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
+ * cdef int chinese_width = chinese_font.getsize("")[0]
+ * cdef int char_width = font.getsize(" ")[0]             # <<<<<<<<<<<<<<
+ * 
+ * cpdef str stretch_width_english_text(str pinyin_word):
+ */
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_u_); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__7);
+  __Pyx_GIVEREF(__pyx_tuple__7);
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -6687,11 +4007,9 @@ static int __Pyx_InitCachedConstants(void) {
 }
 
 static int __Pyx_InitGlobals(void) {
-  __pyx_umethod_PyString_Type_split.type = (PyObject*)&PyString_Type;
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_float_0_4 = PyFloat_FromDouble(0.4); if (unlikely(!__pyx_float_0_4)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_3 = PyInt_FromLong(3); if (unlikely(!__pyx_int_3)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_12 = PyInt_FromLong(12); if (unlikely(!__pyx_int_12)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_100 = PyInt_FromLong(100); if (unlikely(!__pyx_int_100)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_210 = PyInt_FromLong(210); if (unlikely(!__pyx_int_210)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -6953,65 +4271,66 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "add_pinyin.pyx":2
- * # - *- coding: utf- 8 - *-
+  /* "add_pinyin.pyx":4
+ * #!python
+ * #cython: language_level=3
  * import re             # <<<<<<<<<<<<<<
  * import csv
  * import os, sys
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_re, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_re, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_re, __pyx_t_1) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_re, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":3
- * # - *- coding: utf- 8 - *-
+  /* "add_pinyin.pyx":5
+ * #cython: language_level=3
  * import re
  * import csv             # <<<<<<<<<<<<<<
  * import os, sys
  * import glob
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_csv, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 3, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_csv, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_csv, __pyx_t_1) < 0) __PYX_ERR(0, 3, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_csv, __pyx_t_1) < 0) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":4
+  /* "add_pinyin.pyx":6
  * import re
  * import csv
  * import os, sys             # <<<<<<<<<<<<<<
  * import glob
  * from pypinyin import pinyin, load_phrases_dict
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_os, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_os, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_os, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_os, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_sys, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_sys, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sys, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sys, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":5
+  /* "add_pinyin.pyx":7
  * import csv
  * import os, sys
  * import glob             # <<<<<<<<<<<<<<
  * from pypinyin import pinyin, load_phrases_dict
  * import itertools
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_glob, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_glob, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 7, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_glob, __pyx_t_1) < 0) __PYX_ERR(0, 5, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_glob, __pyx_t_1) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":6
+  /* "add_pinyin.pyx":8
  * import os, sys
  * import glob
  * from pypinyin import pinyin, load_phrases_dict             # <<<<<<<<<<<<<<
  * import itertools
  * from PIL import ImageFont
  */
-  __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_pinyin);
   __Pyx_GIVEREF(__pyx_n_s_pinyin);
@@ -7019,60 +4338,60 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_load_phrases_dict);
   __Pyx_GIVEREF(__pyx_n_s_load_phrases_dict);
   PyList_SET_ITEM(__pyx_t_1, 1, __pyx_n_s_load_phrases_dict);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_pypinyin, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_pypinyin, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_pinyin); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_pinyin); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pinyin, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pinyin, __pyx_t_1) < 0) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_load_phrases_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_load_phrases_dict); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_load_phrases_dict, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_load_phrases_dict, __pyx_t_1) < 0) __PYX_ERR(0, 8, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":7
+  /* "add_pinyin.pyx":9
  * import glob
  * from pypinyin import pinyin, load_phrases_dict
  * import itertools             # <<<<<<<<<<<<<<
  * from PIL import ImageFont
  * from html_definitions import header, footer, get_style, get_script
  */
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_itertools, 0, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 7, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_itertools, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_itertools, __pyx_t_2) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_itertools, __pyx_t_2) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":8
+  /* "add_pinyin.pyx":10
  * from pypinyin import pinyin, load_phrases_dict
  * import itertools
  * from PIL import ImageFont             # <<<<<<<<<<<<<<
  * from html_definitions import header, footer, get_style, get_script
  * from pinyin_exceptions import exceptions as pinyin_exceptions
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_ImageFont);
   __Pyx_GIVEREF(__pyx_n_s_ImageFont);
   PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_ImageFont);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_PIL, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_PIL, __pyx_t_2, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_ImageFont); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_ImageFont); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ImageFont, __pyx_t_2) < 0) __PYX_ERR(0, 8, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ImageFont, __pyx_t_2) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":9
+  /* "add_pinyin.pyx":11
  * import itertools
  * from PIL import ImageFont
  * from html_definitions import header, footer, get_style, get_script             # <<<<<<<<<<<<<<
  * from pinyin_exceptions import exceptions as pinyin_exceptions
  * import time
  */
-  __pyx_t_1 = PyList_New(4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_header);
   __Pyx_GIVEREF(__pyx_n_s_header);
@@ -7086,358 +4405,397 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_get_script);
   __Pyx_GIVEREF(__pyx_n_s_get_script);
   PyList_SET_ITEM(__pyx_t_1, 3, __pyx_n_s_get_script);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_html_definitions, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_html_definitions, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_header); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_header); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_header, __pyx_t_1) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_header, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_footer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_footer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_footer, __pyx_t_1) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_footer, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_style); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_style); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_style, __pyx_t_1) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_style, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_script); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_script); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_script, __pyx_t_1) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_script, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":10
+  /* "add_pinyin.pyx":12
  * from PIL import ImageFont
  * from html_definitions import header, footer, get_style, get_script
  * from pinyin_exceptions import exceptions as pinyin_exceptions             # <<<<<<<<<<<<<<
  * import time
  * from cpython cimport bool
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_exceptions);
   __Pyx_GIVEREF(__pyx_n_s_exceptions);
   PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_exceptions);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_pinyin_exceptions, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_pinyin_exceptions, __pyx_t_2, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_exceptions); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_exceptions); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pinyin_exceptions, __pyx_t_2) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pinyin_exceptions, __pyx_t_2) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":11
+  /* "add_pinyin.pyx":13
  * from html_definitions import header, footer, get_style, get_script
  * from pinyin_exceptions import exceptions as pinyin_exceptions
  * import time             # <<<<<<<<<<<<<<
  * from cpython cimport bool
  * from multiprocessing.dummy import Pool as ThreadPool
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_time, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_time, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_time, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_time, __pyx_t_1) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":13
+  /* "add_pinyin.pyx":15
  * import time
  * from cpython cimport bool
  * from multiprocessing.dummy import Pool as ThreadPool             # <<<<<<<<<<<<<<
  * import pandas as pd
  * import numpy as np
  */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_Pool);
   __Pyx_GIVEREF(__pyx_n_s_Pool);
   PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_Pool);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_multiprocessing_dummy, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 13, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_multiprocessing_dummy, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Pool); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_Pool); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ThreadPool, __pyx_t_1) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_ThreadPool, __pyx_t_1) < 0) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":14
+  /* "add_pinyin.pyx":16
  * from cpython cimport bool
  * from multiprocessing.dummy import Pool as ThreadPool
  * import pandas as pd             # <<<<<<<<<<<<<<
  * import numpy as np
  * from itertools import groupby
  */
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_pandas, 0, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_pandas, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pd, __pyx_t_2) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pd, __pyx_t_2) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":15
+  /* "add_pinyin.pyx":17
  * from multiprocessing.dummy import Pool as ThreadPool
  * import pandas as pd
  * import numpy as np             # <<<<<<<<<<<<<<
  * from itertools import groupby
  * from operator import itemgetter
  */
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_numpy, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_2) < 0) __PYX_ERR(0, 15, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_2) < 0) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":16
+  /* "add_pinyin.pyx":18
  * import pandas as pd
  * import numpy as np
  * from itertools import groupby             # <<<<<<<<<<<<<<
  * from operator import itemgetter
  * import math
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_n_s_groupby);
   __Pyx_GIVEREF(__pyx_n_s_groupby);
   PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_groupby);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_itertools, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_itertools, __pyx_t_2, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_groupby); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 16, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_groupby); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_groupby, __pyx_t_2) < 0) __PYX_ERR(0, 16, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_groupby, __pyx_t_2) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "add_pinyin.pyx":17
+  /* "add_pinyin.pyx":19
  * import numpy as np
  * from itertools import groupby
  * from operator import itemgetter             # <<<<<<<<<<<<<<
  * import math
- * load_phrases_dict(pinyin_exceptions)
+ * import logging
  */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_itemgetter);
   __Pyx_GIVEREF(__pyx_n_s_itemgetter);
   PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_itemgetter);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_operator, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_operator, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_itemgetter); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_itemgetter); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_itemgetter, __pyx_t_1) < 0) __PYX_ERR(0, 17, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_itemgetter, __pyx_t_1) < 0) __PYX_ERR(0, 19, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":18
+  /* "add_pinyin.pyx":20
  * from itertools import groupby
  * from operator import itemgetter
  * import math             # <<<<<<<<<<<<<<
+ * import logging
+ * load_phrases_dict(pinyin_exceptions)
+ */
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_math, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_math, __pyx_t_2) < 0) __PYX_ERR(0, 20, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "add_pinyin.pyx":21
+ * from operator import itemgetter
+ * import math
+ * import logging             # <<<<<<<<<<<<<<
  * load_phrases_dict(pinyin_exceptions)
  * base_font_size = round(40 / 12)*12 #36
  */
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_math, 0, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_logging, 0, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_math, __pyx_t_2) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_logging, __pyx_t_2) < 0) __PYX_ERR(0, 21, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":19
- * from operator import itemgetter
+  /* "add_pinyin.pyx":22
  * import math
+ * import logging
  * load_phrases_dict(pinyin_exceptions)             # <<<<<<<<<<<<<<
  * base_font_size = round(40 / 12)*12 #36
  * english_scaling = 0.4 #14
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_load_phrases_dict); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_load_phrases_dict); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_pinyin_exceptions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_pinyin_exceptions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "add_pinyin.pyx":20
- * import math
+  /* "add_pinyin.pyx":23
+ * import logging
  * load_phrases_dict(pinyin_exceptions)
  * base_font_size = round(40 / 12)*12 #36             # <<<<<<<<<<<<<<
  * english_scaling = 0.4 #14
  * pink = '153, 0, 17'
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_round, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_3 = PyFloat_FromDouble((40.0 / 12.0)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyNumber_Multiply(__pyx_t_3, __pyx_int_12); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_builtin_round, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_base_font_size, __pyx_t_1) < 0) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Multiply(__pyx_t_1, __pyx_int_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_base_font_size, __pyx_t_3) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "add_pinyin.pyx":21
+  /* "add_pinyin.pyx":24
  * load_phrases_dict(pinyin_exceptions)
  * base_font_size = round(40 / 12)*12 #36
  * english_scaling = 0.4 #14             # <<<<<<<<<<<<<<
  * pink = '153, 0, 17'
  * 
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_english_scaling, __pyx_float_0_4) < 0) __PYX_ERR(0, 21, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_english_scaling, __pyx_float_0_4) < 0) __PYX_ERR(0, 24, __pyx_L1_error)
 
-  /* "add_pinyin.pyx":22
+  /* "add_pinyin.pyx":25
  * base_font_size = round(40 / 12)*12 #36
  * english_scaling = 0.4 #14
  * pink = '153, 0, 17'             # <<<<<<<<<<<<<<
  * 
- * #dir_path = os.path.dirname(__file__)
+ * #Creating an object
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pink, __pyx_kp_s_utf_153_0_17) < 0) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pink, __pyx_kp_u_153_0_17) < 0) __PYX_ERR(0, 25, __pyx_L1_error)
 
-  /* "add_pinyin.pyx":25
+  /* "add_pinyin.pyx":34
  * 
  * #dir_path = os.path.dirname(__file__)
  * dir_path = os.path.abspath(os.path.dirname(sys.argv[0]))             # <<<<<<<<<<<<<<
  * print (dir_path)
- * 
+ * #logging.error('path for imagefont: ', dir_path + "/fonts/Times_New_Roman.ttf")
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_abspath); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_abspath); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dirname); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_argv); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dirname); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_argv); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dir_path, __pyx_t_2) < 0) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dir_path, __pyx_t_2) < 0) __PYX_ERR(0, 34, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "add_pinyin.pyx":26
+  /* "add_pinyin.pyx":35
  * #dir_path = os.path.dirname(__file__)
  * dir_path = os.path.abspath(os.path.dirname(sys.argv[0]))
  * print (dir_path)             # <<<<<<<<<<<<<<
- * 
- * font = ImageFont.truetype(dir_path + "/fonts/Times_New_Roman.ttf", 100)
+ * #logging.error('path for imagefont: ', dir_path + "/fonts/Times_New_Roman.ttf")
+ * font = ImageFont.truetype(dir_path + "/fonts/UbuntuMono-R.ttf", 100)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 26, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (__Pyx_PrintOne(0, __pyx_t_2) < 0) __PYX_ERR(0, 26, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "add_pinyin.pyx":28
- * print (dir_path)
- * 
- * font = ImageFont.truetype(dir_path + "/fonts/Times_New_Roman.ttf", 100)             # <<<<<<<<<<<<<<
- * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
- * 
- */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ImageFont); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_truetype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_builtin_print, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "add_pinyin.pyx":37
+ * print (dir_path)
+ * #logging.error('path for imagefont: ', dir_path + "/fonts/Times_New_Roman.ttf")
+ * font = ImageFont.truetype(dir_path + "/fonts/UbuntuMono-R.ttf", 100)             # <<<<<<<<<<<<<<
+ * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
+ * cdef int chinese_width = chinese_font.getsize("")[0]
+ */
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_ImageFont); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_truetype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyNumber_Add(__pyx_t_2, __pyx_kp_s_utf_fonts_Times_New_Roman_ttf); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_3 = PyNumber_Add(__pyx_t_4, __pyx_kp_u_fonts_UbuntuMono_R_ttf); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3);
   __Pyx_INCREF(__pyx_int_100);
   __Pyx_GIVEREF(__pyx_int_100);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_100);
-  __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_int_100);
+  __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_font, __pyx_t_1) < 0) __PYX_ERR(0, 28, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_font, __pyx_t_3) < 0) __PYX_ERR(0, 37, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "add_pinyin.pyx":29
- * 
- * font = ImageFont.truetype(dir_path + "/fonts/Times_New_Roman.ttf", 100)
+  /* "add_pinyin.pyx":38
+ * #logging.error('path for imagefont: ', dir_path + "/fonts/Times_New_Roman.ttf")
+ * font = ImageFont.truetype(dir_path + "/fonts/UbuntuMono-R.ttf", 100)
  * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)             # <<<<<<<<<<<<<<
- * 
- * cdef int space_width = font.getsize(" ")[0]
+ * cdef int chinese_width = chinese_font.getsize("")[0]
+ * cdef int char_width = font.getsize(" ")[0]
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_ImageFont); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_truetype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyNumber_Add(__pyx_t_1, __pyx_kp_s_utf_fonts_NotoSansCJK_Regular_ttc); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_ImageFont); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_truetype); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_dir_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = PyNumber_Add(__pyx_t_3, __pyx_kp_u_fonts_NotoSansCJK_Regular_ttc); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
   __Pyx_INCREF(__pyx_int_210);
   __Pyx_GIVEREF(__pyx_int_210);
-  PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_210);
-  __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_210);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 38, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_chinese_font, __pyx_t_2) < 0) __PYX_ERR(0, 38, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_chinese_font, __pyx_t_4) < 0) __PYX_ERR(0, 29, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "add_pinyin.pyx":31
+  /* "add_pinyin.pyx":39
+ * font = ImageFont.truetype(dir_path + "/fonts/UbuntuMono-R.ttf", 100)
  * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
+ * cdef int chinese_width = chinese_font.getsize("")[0]             # <<<<<<<<<<<<<<
+ * cdef int char_width = font.getsize(" ")[0]
  * 
- * cdef int space_width = font.getsize(" ")[0]             # <<<<<<<<<<<<<<
- * 
- * cpdef int calculate_width_chinese(str text):
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_getsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_4, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 31, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_v_10add_pinyin_space_width = __pyx_t_5;
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_chinese_font); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getsize); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 39, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_v_10add_pinyin_chinese_width = __pyx_t_5;
+
+  /* "add_pinyin.pyx":40
+ * chinese_font = ImageFont.truetype(dir_path + "/fonts/NotoSansCJK-Regular.ttc", 210)
+ * cdef int chinese_width = chinese_font.getsize("")[0]
+ * cdef int char_width = font.getsize(" ")[0]             # <<<<<<<<<<<<<<
+ * 
+ * cpdef str stretch_width_english_text(str pinyin_word):
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_font); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_getsize); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 40, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_10add_pinyin_char_width = __pyx_t_5;
 
   /* "add_pinyin.pyx":1
  * # - *- coding: utf- 8 - *-             # <<<<<<<<<<<<<<
- * import re
- * import csv
+ * #!python
+ * #cython: language_level=3
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -7512,6 +4870,100 @@ static PyObject *__Pyx_GetBuiltinName(PyObject *name) {
     return result;
 }
 
+/* ArgTypeTest */
+static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
+{
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
+    }
+    else if (exact) {
+        #if PY_MAJOR_VERSION == 2
+        if ((type == &PyBaseString_Type) && likely(__Pyx_PyBaseString_CheckExact(obj))) return 1;
+        #endif
+    }
+    else {
+        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
+    }
+    PyErr_Format(PyExc_TypeError,
+        "Argument '%.200s' has incorrect type (expected %.200s, got %.200s)",
+        name, type->tp_name, Py_TYPE(obj)->tp_name);
+    return 0;
+}
+
+/* UnicodeAsUCS4 */
+static CYTHON_INLINE Py_UCS4 __Pyx_PyUnicode_AsPy_UCS4(PyObject* x) {
+   Py_ssize_t length;
+   #if CYTHON_PEP393_ENABLED
+   length = PyUnicode_GET_LENGTH(x);
+   if (likely(length == 1)) {
+       return PyUnicode_READ_CHAR(x, 0);
+   }
+   #else
+   length = PyUnicode_GET_SIZE(x);
+   if (likely(length == 1)) {
+       return PyUnicode_AS_UNICODE(x)[0];
+   }
+   #if Py_UNICODE_SIZE == 2
+   else if (PyUnicode_GET_SIZE(x) == 2) {
+       Py_UCS4 high_val = PyUnicode_AS_UNICODE(x)[0];
+       if (high_val >= 0xD800 && high_val <= 0xDBFF) {
+           Py_UCS4 low_val = PyUnicode_AS_UNICODE(x)[1];
+           if (low_val >= 0xDC00 && low_val <= 0xDFFF) {
+               return 0x10000 + (((high_val & ((1<<10)-1)) << 10) | (low_val & ((1<<10)-1)));
+           }
+       }
+   }
+   #endif
+   #endif
+   PyErr_Format(PyExc_ValueError,
+                "only single character unicode strings can be converted to Py_UCS4, "
+                "got length %" CYTHON_FORMAT_SSIZE_T "d", length);
+   return (Py_UCS4)-1;
+}
+
+/* object_ord */
+static long __Pyx__PyObject_Ord(PyObject* c) {
+    Py_ssize_t size;
+    if (PyBytes_Check(c)) {
+        size = PyBytes_GET_SIZE(c);
+        if (likely(size == 1)) {
+            return (unsigned char) PyBytes_AS_STRING(c)[0];
+        }
+#if PY_MAJOR_VERSION < 3
+    } else if (PyUnicode_Check(c)) {
+        return (long)__Pyx_PyUnicode_AsPy_UCS4(c);
+#endif
+#if (!CYTHON_COMPILING_IN_PYPY) || (defined(PyByteArray_AS_STRING) && defined(PyByteArray_GET_SIZE))
+    } else if (PyByteArray_Check(c)) {
+        size = PyByteArray_GET_SIZE(c);
+        if (likely(size == 1)) {
+            return (unsigned char) PyByteArray_AS_STRING(c)[0];
+        }
+#endif
+    } else {
+        PyErr_Format(PyExc_TypeError,
+            "ord() expected string of length 1, but %.200s found", c->ob_type->tp_name);
+        return (long)(Py_UCS4)-1;
+    }
+    PyErr_Format(PyExc_TypeError,
+        "ord() expected a character, but string of length %zd found", size);
+    return (long)(Py_UCS4)-1;
+}
+
+/* ExtTypeTest */
+static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type) {
+    if (unlikely(!type)) {
+        PyErr_SetString(PyExc_SystemError, "Missing type object");
+        return 0;
+    }
+    if (likely(__Pyx_TypeCheck(obj, type)))
+        return 1;
+    PyErr_Format(PyExc_TypeError, "Cannot convert %.200s to %.200s",
+                 Py_TYPE(obj)->tp_name, type->tp_name);
+    return 0;
+}
+
 /* GetModuleGlobalName */
 static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name) {
     PyObject *result;
@@ -7539,28 +4991,92 @@ static CYTHON_INLINE PyObject *__Pyx_GetModuleGlobalName(PyObject *name) {
     return result;
 }
 
-/* PyCFunctionFastCall */
-    #if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
-    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
-    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
-    PyObject *self = PyCFunction_GET_SELF(func);
-    int flags = PyCFunction_GET_FLAGS(func);
-    assert(PyCFunction_Check(func));
-    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS)));
-    assert(nargs >= 0);
-    assert(nargs == 0 || args != NULL);
-    /* _PyCFunction_FastCallDict() must not be called with an exception set,
-       because it may clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!PyErr_Occurred());
-    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
-        return (*((__Pyx_PyCFunctionFastWithKeywords)meth)) (self, args, nargs, NULL);
-    } else {
-        return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs);
-    }
+/* GetItemInt */
+    static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
+    PyObject *r;
+    if (!j) return NULL;
+    r = PyObject_GetItem(o, j);
+    Py_DECREF(j);
+    return r;
 }
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyList_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely((0 <= wrapped_i) & (wrapped_i < PyList_GET_SIZE(o)))) {
+        PyObject *r = PyList_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
 #endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
+                                                              CYTHON_NCP_UNUSED int wraparound,
+                                                              CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    Py_ssize_t wrapped_i = i;
+    if (wraparound & unlikely(i < 0)) {
+        wrapped_i += PyTuple_GET_SIZE(o);
+    }
+    if ((!boundscheck) || likely((0 <= wrapped_i) & (wrapped_i < PyTuple_GET_SIZE(o)))) {
+        PyObject *r = PyTuple_GET_ITEM(o, wrapped_i);
+        Py_INCREF(r);
+        return r;
+    }
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+#else
+    return PySequence_GetItem(o, i);
+#endif
+}
+static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
+                                                     CYTHON_NCP_UNUSED int wraparound,
+                                                     CYTHON_NCP_UNUSED int boundscheck) {
+#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
+    if (is_list || PyList_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
+        if ((!boundscheck) || (likely((n >= 0) & (n < PyList_GET_SIZE(o))))) {
+            PyObject *r = PyList_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    }
+    else if (PyTuple_CheckExact(o)) {
+        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
+        if ((!boundscheck) || likely((n >= 0) & (n < PyTuple_GET_SIZE(o)))) {
+            PyObject *r = PyTuple_GET_ITEM(o, n);
+            Py_INCREF(r);
+            return r;
+        }
+    } else {
+        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
+        if (likely(m && m->sq_item)) {
+            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
+                Py_ssize_t l = m->sq_length(o);
+                if (likely(l >= 0)) {
+                    i += l;
+                } else {
+                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                        return NULL;
+                    PyErr_Clear();
+                }
+            }
+            return m->sq_item(o, i);
+        }
+    }
+#else
+    if (is_list || PySequence_Check(o)) {
+        return PySequence_GetItem(o, i);
+    }
+#endif
+    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+}
 
 /* PyFunctionFastCall */
     #if CYTHON_FAST_PYCALL
@@ -7682,6 +5198,29 @@ done:
 #endif
 #endif
 
+/* PyCFunctionFastCall */
+    #if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
+    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
+    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
+    PyObject *self = PyCFunction_GET_SELF(func);
+    int flags = PyCFunction_GET_FLAGS(func);
+    assert(PyCFunction_Check(func));
+    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS)));
+    assert(nargs >= 0);
+    assert(nargs == 0 || args != NULL);
+    /* _PyCFunction_FastCallDict() must not be called with an exception set,
+       because it may clear it (directly or indirectly) and so the
+       caller loses its exception */
+    assert(!PyErr_Occurred());
+    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
+        return (*((__Pyx_PyCFunctionFastWithKeywords)meth)) (self, args, nargs, NULL);
+    } else {
+        return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs);
+    }
+}
+#endif
+
 /* PyObjectCall */
     #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
@@ -7699,6 +5238,130 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg
             "NULL result without error in PyObject_Call");
     }
     return result;
+}
+#endif
+
+/* RaiseTooManyValuesToUnpack */
+    static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
+    PyErr_Format(PyExc_ValueError,
+                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
+}
+
+/* RaiseNeedMoreValuesToUnpack */
+    static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
+    PyErr_Format(PyExc_ValueError,
+                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
+                 index, (index == 1) ? "" : "s");
+}
+
+/* IterFinish */
+    static CYTHON_INLINE int __Pyx_IterFinish(void) {
+#if CYTHON_FAST_THREAD_STATE
+    PyThreadState *tstate = __Pyx_PyThreadState_Current;
+    PyObject* exc_type = tstate->curexc_type;
+    if (unlikely(exc_type)) {
+        if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) {
+            PyObject *exc_value, *exc_tb;
+            exc_value = tstate->curexc_value;
+            exc_tb = tstate->curexc_traceback;
+            tstate->curexc_type = 0;
+            tstate->curexc_value = 0;
+            tstate->curexc_traceback = 0;
+            Py_DECREF(exc_type);
+            Py_XDECREF(exc_value);
+            Py_XDECREF(exc_tb);
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+#else
+    if (unlikely(PyErr_Occurred())) {
+        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
+            PyErr_Clear();
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+#endif
+}
+
+/* UnpackItemEndCheck */
+    static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
+    if (unlikely(retval)) {
+        Py_DECREF(retval);
+        __Pyx_RaiseTooManyValuesError(expected);
+        return -1;
+    } else {
+        return __Pyx_IterFinish();
+    }
+    return 0;
+}
+
+/* RaiseNoneIterError */
+    static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
+}
+
+/* SliceTupleAndList */
+    #if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE void __Pyx_crop_slice(Py_ssize_t* _start, Py_ssize_t* _stop, Py_ssize_t* _length) {
+    Py_ssize_t start = *_start, stop = *_stop, length = *_length;
+    if (start < 0) {
+        start += length;
+        if (start < 0)
+            start = 0;
+    }
+    if (stop < 0)
+        stop += length;
+    else if (stop > length)
+        stop = length;
+    *_length = stop - start;
+    *_start = start;
+    *_stop = stop;
+}
+static CYTHON_INLINE void __Pyx_copy_object_array(PyObject** CYTHON_RESTRICT src, PyObject** CYTHON_RESTRICT dest, Py_ssize_t length) {
+    PyObject *v;
+    Py_ssize_t i;
+    for (i = 0; i < length; i++) {
+        v = dest[i] = src[i];
+        Py_INCREF(v);
+    }
+}
+static CYTHON_INLINE PyObject* __Pyx_PyList_GetSlice(
+            PyObject* src, Py_ssize_t start, Py_ssize_t stop) {
+    PyObject* dest;
+    Py_ssize_t length = PyList_GET_SIZE(src);
+    __Pyx_crop_slice(&start, &stop, &length);
+    if (unlikely(length <= 0))
+        return PyList_New(0);
+    dest = PyList_New(length);
+    if (unlikely(!dest))
+        return NULL;
+    __Pyx_copy_object_array(
+        ((PyListObject*)src)->ob_item + start,
+        ((PyListObject*)dest)->ob_item,
+        length);
+    return dest;
+}
+static CYTHON_INLINE PyObject* __Pyx_PyTuple_GetSlice(
+            PyObject* src, Py_ssize_t start, Py_ssize_t stop) {
+    PyObject* dest;
+    Py_ssize_t length = PyTuple_GET_SIZE(src);
+    __Pyx_crop_slice(&start, &stop, &length);
+    if (unlikely(length <= 0))
+        return PyTuple_New(0);
+    dest = PyTuple_New(length);
+    if (unlikely(!dest))
+        return NULL;
+    __Pyx_copy_object_array(
+        ((PyTupleObject*)src)->ob_item + start,
+        ((PyTupleObject*)dest)->ob_item,
+        length);
+    return dest;
 }
 #endif
 
@@ -7762,535 +5425,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObjec
 }
 #endif
 
-/* GetItemInt */
-    static PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
-    PyObject *r;
-    if (!j) return NULL;
-    r = PyObject_GetItem(o, j);
-    Py_DECREF(j);
-    return r;
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    Py_ssize_t wrapped_i = i;
-    if (wraparound & unlikely(i < 0)) {
-        wrapped_i += PyList_GET_SIZE(o);
-    }
-    if ((!boundscheck) || likely((0 <= wrapped_i) & (wrapped_i < PyList_GET_SIZE(o)))) {
-        PyObject *r = PyList_GET_ITEM(o, wrapped_i);
-        Py_INCREF(r);
-        return r;
-    }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    Py_ssize_t wrapped_i = i;
-    if (wraparound & unlikely(i < 0)) {
-        wrapped_i += PyTuple_GET_SIZE(o);
-    }
-    if ((!boundscheck) || likely((0 <= wrapped_i) & (wrapped_i < PyTuple_GET_SIZE(o)))) {
-        PyObject *r = PyTuple_GET_ITEM(o, wrapped_i);
-        Py_INCREF(r);
-        return r;
-    }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
-                                                     CYTHON_NCP_UNUSED int wraparound,
-                                                     CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
-        if ((!boundscheck) || (likely((n >= 0) & (n < PyList_GET_SIZE(o))))) {
-            PyObject *r = PyList_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
-    }
-    else if (PyTuple_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
-        if ((!boundscheck) || likely((n >= 0) & (n < PyTuple_GET_SIZE(o)))) {
-            PyObject *r = PyTuple_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
-    } else {
-        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
-        if (likely(m && m->sq_item)) {
-            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
-                Py_ssize_t l = m->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return NULL;
-                    PyErr_Clear();
-                }
-            }
-            return m->sq_item(o, i);
-        }
-    }
-#else
-    if (is_list || PySequence_Check(o)) {
-        return PySequence_GetItem(o, i);
-    }
-#endif
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-}
-
-/* PyErrFetchRestore */
-    #if CYTHON_FAST_THREAD_STATE
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-}
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-}
-#endif
-
-/* WriteUnraisableException */
-    static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
-}
-
-/* ArgTypeTest */
-    static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact)
-{
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    else if (exact) {
-        #if PY_MAJOR_VERSION == 2
-        if ((type == &PyBaseString_Type) && likely(__Pyx_PyBaseString_CheckExact(obj))) return 1;
-        #endif
-    }
-    else {
-        if (likely(__Pyx_TypeCheck(obj, type))) return 1;
-    }
-    PyErr_Format(PyExc_TypeError,
-        "Argument '%.200s' has incorrect type (expected %.200s, got %.200s)",
-        name, type->tp_name, Py_TYPE(obj)->tp_name);
-    return 0;
-}
-
-/* None */
-    static CYTHON_INLINE int __Pyx_div_int(int a, int b) {
-    int q = a / b;
-    int r = a - q*b;
-    q -= ((r != 0) & ((r ^ b) < 0));
-    return q;
-}
-
-/* RaiseArgTupleInvalid */
-    static void __Pyx_RaiseArgtupleInvalid(
-    const char* func_name,
-    int exact,
-    Py_ssize_t num_min,
-    Py_ssize_t num_max,
-    Py_ssize_t num_found)
-{
-    Py_ssize_t num_expected;
-    const char *more_or_less;
-    if (num_found < num_min) {
-        num_expected = num_min;
-        more_or_less = "at least";
-    } else {
-        num_expected = num_max;
-        more_or_less = "at most";
-    }
-    if (exact) {
-        more_or_less = "exactly";
-    }
-    PyErr_Format(PyExc_TypeError,
-                 "%.200s() takes %.8s %" CYTHON_FORMAT_SSIZE_T "d positional argument%.1s (%" CYTHON_FORMAT_SSIZE_T "d given)",
-                 func_name, more_or_less, num_expected,
-                 (num_expected == 1) ? "" : "s", num_found);
-}
-
-/* RaiseDoubleKeywords */
-    static void __Pyx_RaiseDoubleKeywordsError(
-    const char* func_name,
-    PyObject* kw_name)
-{
-    PyErr_Format(PyExc_TypeError,
-        #if PY_MAJOR_VERSION >= 3
-        "%s() got multiple values for keyword argument '%U'", func_name, kw_name);
-        #else
-        "%s() got multiple values for keyword argument '%s'", func_name,
-        PyString_AsString(kw_name));
-        #endif
-}
-
-/* ParseKeywords */
-    static int __Pyx_ParseOptionalKeywords(
-    PyObject *kwds,
-    PyObject **argnames[],
-    PyObject *kwds2,
-    PyObject *values[],
-    Py_ssize_t num_pos_args,
-    const char* function_name)
-{
-    PyObject *key = 0, *value = 0;
-    Py_ssize_t pos = 0;
-    PyObject*** name;
-    PyObject*** first_kw_arg = argnames + num_pos_args;
-    while (PyDict_Next(kwds, &pos, &key, &value)) {
-        name = first_kw_arg;
-        while (*name && (**name != key)) name++;
-        if (*name) {
-            values[name-argnames] = value;
-            continue;
-        }
-        name = first_kw_arg;
-        #if PY_MAJOR_VERSION < 3
-        if (likely(PyString_CheckExact(key)) || likely(PyString_Check(key))) {
-            while (*name) {
-                if ((CYTHON_COMPILING_IN_PYPY || PyString_GET_SIZE(**name) == PyString_GET_SIZE(key))
-                        && _PyString_Eq(**name, key)) {
-                    values[name-argnames] = value;
-                    break;
-                }
-                name++;
-            }
-            if (*name) continue;
-            else {
-                PyObject*** argname = argnames;
-                while (argname != first_kw_arg) {
-                    if ((**argname == key) || (
-                            (CYTHON_COMPILING_IN_PYPY || PyString_GET_SIZE(**argname) == PyString_GET_SIZE(key))
-                             && _PyString_Eq(**argname, key))) {
-                        goto arg_passed_twice;
-                    }
-                    argname++;
-                }
-            }
-        } else
-        #endif
-        if (likely(PyUnicode_Check(key))) {
-            while (*name) {
-                int cmp = (**name == key) ? 0 :
-                #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION >= 3
-                    (PyUnicode_GET_SIZE(**name) != PyUnicode_GET_SIZE(key)) ? 1 :
-                #endif
-                    PyUnicode_Compare(**name, key);
-                if (cmp < 0 && unlikely(PyErr_Occurred())) goto bad;
-                if (cmp == 0) {
-                    values[name-argnames] = value;
-                    break;
-                }
-                name++;
-            }
-            if (*name) continue;
-            else {
-                PyObject*** argname = argnames;
-                while (argname != first_kw_arg) {
-                    int cmp = (**argname == key) ? 0 :
-                    #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION >= 3
-                        (PyUnicode_GET_SIZE(**argname) != PyUnicode_GET_SIZE(key)) ? 1 :
-                    #endif
-                        PyUnicode_Compare(**argname, key);
-                    if (cmp < 0 && unlikely(PyErr_Occurred())) goto bad;
-                    if (cmp == 0) goto arg_passed_twice;
-                    argname++;
-                }
-            }
-        } else
-            goto invalid_keyword_type;
-        if (kwds2) {
-            if (unlikely(PyDict_SetItem(kwds2, key, value))) goto bad;
-        } else {
-            goto invalid_keyword;
-        }
-    }
-    return 0;
-arg_passed_twice:
-    __Pyx_RaiseDoubleKeywordsError(function_name, key);
-    goto bad;
-invalid_keyword_type:
-    PyErr_Format(PyExc_TypeError,
-        "%.200s() keywords must be strings", function_name);
-    goto bad;
-invalid_keyword:
-    PyErr_Format(PyExc_TypeError,
-    #if PY_MAJOR_VERSION < 3
-        "%.200s() got an unexpected keyword argument '%.200s'",
-        function_name, PyString_AsString(key));
-    #else
-        "%s() got an unexpected keyword argument '%U'",
-        function_name, key);
-    #endif
-bad:
-    return -1;
-}
-
-/* UnpackUnboundCMethod */
-    static int __Pyx_TryUnpackUnboundCMethod(__Pyx_CachedCFunction* target) {
-    PyObject *method;
-    method = __Pyx_PyObject_GetAttrStr(target->type, *target->method_name);
-    if (unlikely(!method))
-        return -1;
-    target->method = method;
-#if CYTHON_COMPILING_IN_CPYTHON
-    #if PY_MAJOR_VERSION >= 3
-    if (likely(__Pyx_TypeCheck(method, &PyMethodDescr_Type)))
-    #endif
-    {
-        PyMethodDescrObject *descr = (PyMethodDescrObject*) method;
-        target->func = descr->d_method->ml_meth;
-        target->flag = descr->d_method->ml_flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST);
-    }
-#endif
-    return 0;
-}
-
-/* CallUnboundCMethod1 */
-    #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_CallUnboundCMethod1(__Pyx_CachedCFunction* cfunc, PyObject* self, PyObject* arg) {
-    if (likely(cfunc->func)) {
-        int flag = cfunc->flag;
-        if (flag == METH_O) {
-            return (*(cfunc->func))(self, arg);
-        } else if (PY_VERSION_HEX >= 0x030600B1 && flag == METH_FASTCALL) {
-            if (PY_VERSION_HEX >= 0x030700A0) {
-                return (*(__Pyx_PyCFunctionFast)cfunc->func)(self, &arg, 1);
-            } else {
-                return (*(__Pyx_PyCFunctionFastWithKeywords)cfunc->func)(self, &arg, 1, NULL);
-            }
-        } else if (PY_VERSION_HEX >= 0x030700A0 && flag == (METH_FASTCALL | METH_KEYWORDS)) {
-            return (*(__Pyx_PyCFunctionFastWithKeywords)cfunc->func)(self, &arg, 1, NULL);
-        }
-    }
-    return __Pyx__CallUnboundCMethod1(cfunc, self, arg);
-}
-#endif
-static PyObject* __Pyx__CallUnboundCMethod1(__Pyx_CachedCFunction* cfunc, PyObject* self, PyObject* arg){
-    PyObject *args, *result = NULL;
-    if (unlikely(!cfunc->func && !cfunc->method) && unlikely(__Pyx_TryUnpackUnboundCMethod(cfunc) < 0)) return NULL;
-#if CYTHON_COMPILING_IN_CPYTHON
-    if (cfunc->func && (cfunc->flag & METH_VARARGS)) {
-        args = PyTuple_New(1);
-        if (unlikely(!args)) goto bad;
-        Py_INCREF(arg);
-        PyTuple_SET_ITEM(args, 0, arg);
-        if (cfunc->flag & METH_KEYWORDS)
-            result = (*(PyCFunctionWithKeywords)cfunc->func)(self, args, NULL);
-        else
-            result = (*cfunc->func)(self, args);
-    } else {
-        args = PyTuple_New(2);
-        if (unlikely(!args)) goto bad;
-        Py_INCREF(self);
-        PyTuple_SET_ITEM(args, 0, self);
-        Py_INCREF(arg);
-        PyTuple_SET_ITEM(args, 1, arg);
-        result = __Pyx_PyObject_Call(cfunc->method, args, NULL);
-    }
-#else
-    args = PyTuple_Pack(2, self, arg);
-    if (unlikely(!args)) goto bad;
-    result = __Pyx_PyObject_Call(cfunc->method, args, NULL);
-#endif
-bad:
-    Py_XDECREF(args);
-    return result;
-}
-
-/* UnicodeAsUCS4 */
-    static CYTHON_INLINE Py_UCS4 __Pyx_PyUnicode_AsPy_UCS4(PyObject* x) {
-   Py_ssize_t length;
-   #if CYTHON_PEP393_ENABLED
-   length = PyUnicode_GET_LENGTH(x);
-   if (likely(length == 1)) {
-       return PyUnicode_READ_CHAR(x, 0);
-   }
-   #else
-   length = PyUnicode_GET_SIZE(x);
-   if (likely(length == 1)) {
-       return PyUnicode_AS_UNICODE(x)[0];
-   }
-   #if Py_UNICODE_SIZE == 2
-   else if (PyUnicode_GET_SIZE(x) == 2) {
-       Py_UCS4 high_val = PyUnicode_AS_UNICODE(x)[0];
-       if (high_val >= 0xD800 && high_val <= 0xDBFF) {
-           Py_UCS4 low_val = PyUnicode_AS_UNICODE(x)[1];
-           if (low_val >= 0xDC00 && low_val <= 0xDFFF) {
-               return 0x10000 + (((high_val & ((1<<10)-1)) << 10) | (low_val & ((1<<10)-1)));
-           }
-       }
-   }
-   #endif
-   #endif
-   PyErr_Format(PyExc_ValueError,
-                "only single character unicode strings can be converted to Py_UCS4, "
-                "got length %" CYTHON_FORMAT_SSIZE_T "d", length);
-   return (Py_UCS4)-1;
-}
-
-/* object_ord */
-    static long __Pyx__PyObject_Ord(PyObject* c) {
-    Py_ssize_t size;
-    if (PyBytes_Check(c)) {
-        size = PyBytes_GET_SIZE(c);
-        if (likely(size == 1)) {
-            return (unsigned char) PyBytes_AS_STRING(c)[0];
-        }
-#if PY_MAJOR_VERSION < 3
-    } else if (PyUnicode_Check(c)) {
-        return (long)__Pyx_PyUnicode_AsPy_UCS4(c);
-#endif
-#if (!CYTHON_COMPILING_IN_PYPY) || (defined(PyByteArray_AS_STRING) && defined(PyByteArray_GET_SIZE))
-    } else if (PyByteArray_Check(c)) {
-        size = PyByteArray_GET_SIZE(c);
-        if (likely(size == 1)) {
-            return (unsigned char) PyByteArray_AS_STRING(c)[0];
-        }
-#endif
-    } else {
-        PyErr_Format(PyExc_TypeError,
-            "ord() expected string of length 1, but %.200s found", c->ob_type->tp_name);
-        return (long)(Py_UCS4)-1;
-    }
-    PyErr_Format(PyExc_TypeError,
-        "ord() expected a character, but string of length %zd found", size);
-    return (long)(Py_UCS4)-1;
-}
-
-/* ExtTypeTest */
-    static CYTHON_INLINE int __Pyx_TypeTest(PyObject *obj, PyTypeObject *type) {
-    if (unlikely(!type)) {
-        PyErr_SetString(PyExc_SystemError, "Missing type object");
-        return 0;
-    }
-    if (likely(__Pyx_TypeCheck(obj, type)))
-        return 1;
-    PyErr_Format(PyExc_TypeError, "Cannot convert %.200s to %.200s",
-                 Py_TYPE(obj)->tp_name, type->tp_name);
-    return 0;
-}
-
-/* RaiseTooManyValuesToUnpack */
-    static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {
-    PyErr_Format(PyExc_ValueError,
-                 "too many values to unpack (expected %" CYTHON_FORMAT_SSIZE_T "d)", expected);
-}
-
-/* RaiseNeedMoreValuesToUnpack */
-    static CYTHON_INLINE void __Pyx_RaiseNeedMoreValuesError(Py_ssize_t index) {
-    PyErr_Format(PyExc_ValueError,
-                 "need more than %" CYTHON_FORMAT_SSIZE_T "d value%.1s to unpack",
-                 index, (index == 1) ? "" : "s");
-}
-
-/* IterFinish */
-    static CYTHON_INLINE int __Pyx_IterFinish(void) {
-#if CYTHON_FAST_THREAD_STATE
-    PyThreadState *tstate = __Pyx_PyThreadState_Current;
-    PyObject* exc_type = tstate->curexc_type;
-    if (unlikely(exc_type)) {
-        if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) {
-            PyObject *exc_value, *exc_tb;
-            exc_value = tstate->curexc_value;
-            exc_tb = tstate->curexc_traceback;
-            tstate->curexc_type = 0;
-            tstate->curexc_value = 0;
-            tstate->curexc_traceback = 0;
-            Py_DECREF(exc_type);
-            Py_XDECREF(exc_value);
-            Py_XDECREF(exc_tb);
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#else
-    if (unlikely(PyErr_Occurred())) {
-        if (likely(PyErr_ExceptionMatches(PyExc_StopIteration))) {
-            PyErr_Clear();
-            return 0;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
-#endif
-}
-
-/* UnpackItemEndCheck */
-    static int __Pyx_IternextUnpackEndCheck(PyObject *retval, Py_ssize_t expected) {
-    if (unlikely(retval)) {
-        Py_DECREF(retval);
-        __Pyx_RaiseTooManyValuesError(expected);
-        return -1;
-    } else {
-        return __Pyx_IterFinish();
-    }
-    return 0;
-}
-
 /* PyObjectCallNoArg */
     #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
@@ -8312,107 +5446,132 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
 }
 #endif
 
-/* RaiseNoneIterError */
-      static CYTHON_INLINE void __Pyx_RaiseNoneNotIterableError(void) {
-    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
+/* PyObjectFormat */
+      #if CYTHON_USE_UNICODE_WRITER
+static PyObject* __Pyx_PyObject_Format(PyObject* obj, PyObject* format_spec) {
+    int ret;
+    _PyUnicodeWriter writer;
+    if (likely(PyFloat_CheckExact(obj))) {
+#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x03040000
+        _PyUnicodeWriter_Init(&writer, 0);
+#else
+        _PyUnicodeWriter_Init(&writer);
+#endif
+        ret = _PyFloat_FormatAdvancedWriter(
+            &writer,
+            obj,
+            format_spec, 0, PyUnicode_GET_LENGTH(format_spec));
+    } else if (likely(PyLong_CheckExact(obj))) {
+#if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX < 0x03040000
+        _PyUnicodeWriter_Init(&writer, 0);
+#else
+        _PyUnicodeWriter_Init(&writer);
+#endif
+        ret = _PyLong_FormatAdvancedWriter(
+            &writer,
+            obj,
+            format_spec, 0, PyUnicode_GET_LENGTH(format_spec));
+    } else {
+        return PyObject_Format(obj, format_spec);
+    }
+    if (unlikely(ret == -1)) {
+        _PyUnicodeWriter_Dealloc(&writer);
+        return NULL;
+    }
+    return _PyUnicodeWriter_Finish(&writer);
+}
+#endif
+
+/* JoinPyUnicode */
+      static PyObject* __Pyx_PyUnicode_Join(PyObject* value_tuple, Py_ssize_t value_count, Py_ssize_t result_ulength,
+                                      CYTHON_UNUSED Py_UCS4 max_char) {
+#if CYTHON_USE_UNICODE_INTERNALS && CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    PyObject *result_uval;
+    int result_ukind;
+    Py_ssize_t i, char_pos;
+    void *result_udata;
+#if CYTHON_PEP393_ENABLED
+    result_uval = PyUnicode_New(result_ulength, max_char);
+    if (unlikely(!result_uval)) return NULL;
+    result_ukind = (max_char <= 255) ? PyUnicode_1BYTE_KIND : (max_char <= 65535) ? PyUnicode_2BYTE_KIND : PyUnicode_4BYTE_KIND;
+    result_udata = PyUnicode_DATA(result_uval);
+#else
+    result_uval = PyUnicode_FromUnicode(NULL, result_ulength);
+    if (unlikely(!result_uval)) return NULL;
+    result_ukind = sizeof(Py_UNICODE);
+    result_udata = PyUnicode_AS_UNICODE(result_uval);
+#endif
+    char_pos = 0;
+    for (i=0; i < value_count; i++) {
+        int ukind;
+        Py_ssize_t ulength;
+        void *udata;
+        PyObject *uval = PyTuple_GET_ITEM(value_tuple, i);
+        if (unlikely(__Pyx_PyUnicode_READY(uval)))
+            goto bad;
+        ulength = __Pyx_PyUnicode_GET_LENGTH(uval);
+        if (unlikely(!ulength))
+            continue;
+        if (unlikely(char_pos + ulength < 0))
+            goto overflow;
+        ukind = __Pyx_PyUnicode_KIND(uval);
+        udata = __Pyx_PyUnicode_DATA(uval);
+        if (!CYTHON_PEP393_ENABLED || ukind == result_ukind) {
+            memcpy((char *)result_udata + char_pos * result_ukind, udata, (size_t) (ulength * result_ukind));
+        } else {
+            #if CYTHON_COMPILING_IN_CPYTHON && PY_VERSION_HEX >= 0x030300F0 || defined(_PyUnicode_FastCopyCharacters)
+            _PyUnicode_FastCopyCharacters(result_uval, char_pos, uval, 0, ulength);
+            #else
+            Py_ssize_t j;
+            for (j=0; j < ulength; j++) {
+                Py_UCS4 uchar = __Pyx_PyUnicode_READ(ukind, udata, j);
+                __Pyx_PyUnicode_WRITE(result_ukind, result_udata, char_pos+j, uchar);
+            }
+            #endif
+        }
+        char_pos += ulength;
+    }
+    return result_uval;
+overflow:
+    PyErr_SetString(PyExc_OverflowError, "join() result is too long for a Python string");
+bad:
+    Py_DECREF(result_uval);
+    return NULL;
+#else
+    result_ulength++;
+    value_count++;
+    return PyUnicode_Join(__pyx_empty_unicode, value_tuple);
+#endif
 }
 
-/* SliceObject */
-      static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(PyObject* obj,
-        Py_ssize_t cstart, Py_ssize_t cstop,
-        PyObject** _py_start, PyObject** _py_stop, PyObject** _py_slice,
-        int has_cstart, int has_cstop, CYTHON_UNUSED int wraparound) {
-#if CYTHON_USE_TYPE_SLOTS
-    PyMappingMethods* mp;
-#if PY_MAJOR_VERSION < 3
-    PySequenceMethods* ms = Py_TYPE(obj)->tp_as_sequence;
-    if (likely(ms && ms->sq_slice)) {
-        if (!has_cstart) {
-            if (_py_start && (*_py_start != Py_None)) {
-                cstart = __Pyx_PyIndex_AsSsize_t(*_py_start);
-                if ((cstart == (Py_ssize_t)-1) && PyErr_Occurred()) goto bad;
-            } else
-                cstart = 0;
-        }
-        if (!has_cstop) {
-            if (_py_stop && (*_py_stop != Py_None)) {
-                cstop = __Pyx_PyIndex_AsSsize_t(*_py_stop);
-                if ((cstop == (Py_ssize_t)-1) && PyErr_Occurred()) goto bad;
-            } else
-                cstop = PY_SSIZE_T_MAX;
-        }
-        if (wraparound && unlikely((cstart < 0) | (cstop < 0)) && likely(ms->sq_length)) {
-            Py_ssize_t l = ms->sq_length(obj);
-            if (likely(l >= 0)) {
-                if (cstop < 0) {
-                    cstop += l;
-                    if (cstop < 0) cstop = 0;
-                }
-                if (cstart < 0) {
-                    cstart += l;
-                    if (cstart < 0) cstart = 0;
-                }
-            } else {
-                if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                    goto bad;
-                PyErr_Clear();
-            }
-        }
-        return ms->sq_slice(obj, cstart, cstop);
+/* ObjectGetItem */
+      #if CYTHON_USE_TYPE_SLOTS
+static PyObject *__Pyx_PyObject_GetIndex(PyObject *obj, PyObject* index) {
+    PyObject *runerr;
+    Py_ssize_t key_value;
+    PySequenceMethods *m = Py_TYPE(obj)->tp_as_sequence;
+    if (unlikely(!(m && m->sq_item))) {
+        PyErr_Format(PyExc_TypeError, "'%.200s' object is not subscriptable", Py_TYPE(obj)->tp_name);
+        return NULL;
     }
-#endif
-    mp = Py_TYPE(obj)->tp_as_mapping;
-    if (likely(mp && mp->mp_subscript))
-#endif
-    {
-        PyObject* result;
-        PyObject *py_slice, *py_start, *py_stop;
-        if (_py_slice) {
-            py_slice = *_py_slice;
-        } else {
-            PyObject* owned_start = NULL;
-            PyObject* owned_stop = NULL;
-            if (_py_start) {
-                py_start = *_py_start;
-            } else {
-                if (has_cstart) {
-                    owned_start = py_start = PyInt_FromSsize_t(cstart);
-                    if (unlikely(!py_start)) goto bad;
-                } else
-                    py_start = Py_None;
-            }
-            if (_py_stop) {
-                py_stop = *_py_stop;
-            } else {
-                if (has_cstop) {
-                    owned_stop = py_stop = PyInt_FromSsize_t(cstop);
-                    if (unlikely(!py_stop)) {
-                        Py_XDECREF(owned_start);
-                        goto bad;
-                    }
-                } else
-                    py_stop = Py_None;
-            }
-            py_slice = PySlice_New(py_start, py_stop, Py_None);
-            Py_XDECREF(owned_start);
-            Py_XDECREF(owned_stop);
-            if (unlikely(!py_slice)) goto bad;
-        }
-#if CYTHON_USE_TYPE_SLOTS
-        result = mp->mp_subscript(obj, py_slice);
-#else
-        result = PyObject_GetItem(obj, py_slice);
-#endif
-        if (!_py_slice) {
-            Py_DECREF(py_slice);
-        }
-        return result;
+    key_value = __Pyx_PyIndex_AsSsize_t(index);
+    if (likely(key_value != -1 || !(runerr = PyErr_Occurred()))) {
+        return __Pyx_GetItemInt_Fast(obj, key_value, 0, 1, 1);
     }
-    PyErr_Format(PyExc_TypeError,
-        "'%.200s' object is unsliceable", Py_TYPE(obj)->tp_name);
-bad:
+    if (PyErr_GivenExceptionMatches(runerr, PyExc_OverflowError)) {
+        PyErr_Clear();
+        PyErr_Format(PyExc_IndexError, "cannot fit '%.200s' into an index-sized integer", Py_TYPE(index)->tp_name);
+    }
     return NULL;
 }
+static PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject* key) {
+    PyMappingMethods *m = Py_TYPE(obj)->tp_as_mapping;
+    if (likely(m && m->mp_subscript)) {
+        return m->mp_subscript(obj, key);
+    }
+    return __Pyx_PyObject_GetIndex(obj, key);
+}
+#endif
 
 /* Import */
       static PyObject *__Pyx_Import(PyObject *name, PyObject *from_list, int level) {
@@ -8492,6 +5651,30 @@ bad:
     }
     return value;
 }
+
+/* PyErrFetchRestore */
+      #if CYTHON_FAST_THREAD_STATE
+static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
+    PyObject *tmp_type, *tmp_value, *tmp_tb;
+    tmp_type = tstate->curexc_type;
+    tmp_value = tstate->curexc_value;
+    tmp_tb = tstate->curexc_traceback;
+    tstate->curexc_type = type;
+    tstate->curexc_value = value;
+    tstate->curexc_traceback = tb;
+    Py_XDECREF(tmp_type);
+    Py_XDECREF(tmp_value);
+    Py_XDECREF(tmp_tb);
+}
+static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
+    *type = tstate->curexc_type;
+    *value = tstate->curexc_value;
+    *tb = tstate->curexc_traceback;
+    tstate->curexc_type = 0;
+    tstate->curexc_value = 0;
+    tstate->curexc_traceback = 0;
+}
+#endif
 
 /* CLineInTraceback */
       #ifndef CYTHON_CLINE_IN_TRACEBACK
@@ -8729,112 +5912,6 @@ bad:
     }
 }
 
-/* Print */
-      #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static PyObject *__Pyx_GetStdout(void) {
-    PyObject *f = PySys_GetObject((char *)"stdout");
-    if (!f) {
-        PyErr_SetString(PyExc_RuntimeError, "lost sys.stdout");
-    }
-    return f;
-}
-static int __Pyx_Print(PyObject* f, PyObject *arg_tuple, int newline) {
-    int i;
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    for (i=0; i < PyTuple_GET_SIZE(arg_tuple); i++) {
-        PyObject* v;
-        if (PyFile_SoftSpace(f, 1)) {
-            if (PyFile_WriteString(" ", f) < 0)
-                goto error;
-        }
-        v = PyTuple_GET_ITEM(arg_tuple, i);
-        if (PyFile_WriteObject(v, f, Py_PRINT_RAW) < 0)
-            goto error;
-        if (PyString_Check(v)) {
-            char *s = PyString_AsString(v);
-            Py_ssize_t len = PyString_Size(v);
-            if (len > 0) {
-                switch (s[len-1]) {
-                    case ' ': break;
-                    case '\f': case '\r': case '\n': case '\t': case '\v':
-                        PyFile_SoftSpace(f, 0);
-                        break;
-                    default:  break;
-                }
-            }
-        }
-    }
-    if (newline) {
-        if (PyFile_WriteString("\n", f) < 0)
-            goto error;
-        PyFile_SoftSpace(f, 0);
-    }
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-}
-#else
-static int __Pyx_Print(PyObject* stream, PyObject *arg_tuple, int newline) {
-    PyObject* kwargs = 0;
-    PyObject* result = 0;
-    PyObject* end_string;
-    if (unlikely(!__pyx_print)) {
-        __pyx_print = PyObject_GetAttr(__pyx_b, __pyx_n_s_print);
-        if (!__pyx_print)
-            return -1;
-    }
-    if (stream) {
-        kwargs = PyDict_New();
-        if (unlikely(!kwargs))
-            return -1;
-        if (unlikely(PyDict_SetItem(kwargs, __pyx_n_s_file, stream) < 0))
-            goto bad;
-        if (!newline) {
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                goto bad;
-            if (PyDict_SetItem(kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                goto bad;
-            }
-            Py_DECREF(end_string);
-        }
-    } else if (!newline) {
-        if (unlikely(!__pyx_print_kwargs)) {
-            __pyx_print_kwargs = PyDict_New();
-            if (unlikely(!__pyx_print_kwargs))
-                return -1;
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                return -1;
-            if (PyDict_SetItem(__pyx_print_kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                return -1;
-            }
-            Py_DECREF(end_string);
-        }
-        kwargs = __pyx_print_kwargs;
-    }
-    result = PyObject_Call(__pyx_print, arg_tuple, kwargs);
-    if (unlikely(kwargs) && (kwargs != __pyx_print_kwargs))
-        Py_DECREF(kwargs);
-    if (!result)
-        return -1;
-    Py_DECREF(result);
-    return 0;
-bad:
-    if (kwargs != __pyx_print_kwargs)
-        Py_XDECREF(kwargs);
-    return -1;
-}
-#endif
-
 /* CIntFromPyVerify */
       #define __PYX_VERIFY_RETURN_INT(target_type, func_type, func_value)\
     __PYX__VERIFY_RETURN_INT(target_type, func_type, func_value, 0)
@@ -8856,74 +5933,6 @@ bad:
         }\
         return (target_type) value;\
     }
-
-/* CIntToPy */
-      static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
-    const int neg_one = (int) -1, const_zero = (int) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(int) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(int) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
-    }
-}
-
-/* PrintOne */
-      #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static int __Pyx_PrintOne(PyObject* f, PyObject *o) {
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    if (PyFile_SoftSpace(f, 0)) {
-        if (PyFile_WriteString(" ", f) < 0)
-            goto error;
-    }
-    if (PyFile_WriteObject(o, f, Py_PRINT_RAW) < 0)
-        goto error;
-    if (PyFile_WriteString("\n", f) < 0)
-        goto error;
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-    /* the line below is just to avoid C compiler
-     * warnings about unused functions */
-    return __Pyx_Print(f, NULL, 0);
-}
-#else
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o) {
-    int res;
-    PyObject* arg_tuple = PyTuple_Pack(1, o);
-    if (unlikely(!arg_tuple))
-        return -1;
-    res = __Pyx_Print(stream, arg_tuple, 1);
-    Py_DECREF(arg_tuple);
-    return res;
-}
-#endif
 
 /* CIntFromPy */
       static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *x) {
